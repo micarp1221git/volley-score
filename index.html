@@ -99,20 +99,28 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .tool:disabled{opacity:.3}
 
 /* 縦向き：上下に2チーム */
+.pad{display:none}
+.hit{border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:inset 0 0 0 1px #ffffff1a}
+.hit:active{filter:brightness(1.18);transform:scale(.99)}
+.hit b{font-family:var(--num);font-weight:400;font-size:clamp(56px,11vh,110px);line-height:1;padding-top:.06em}
+.hit .nm{font-size:15px;font-weight:700;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 縦向き：上に得点を横ならび、下で操作 */
 @media (orientation:portrait){
-  .court{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto minmax(0,1fr)}
-  .side .flip{height:min(100%,27vh);width:min(100%,46vh);font-size:min(26vh,58vw)}
-  .meta{padding-bottom:8px;min-height:40px}
-  .to{padding:6px 10px}
-  .arrow span{display:none}
-  .center{width:100%;flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
-  .setlbl{text-align:left;min-width:64px}
-  .setcards .flip{width:clamp(34px,9vw,52px);height:clamp(48px,7vh,70px);font-size:clamp(40px,6vh,60px)}
-  .arrow{width:auto}
-  .arrow svg{width:clamp(36px,10vw,56px)}
-  .tools{width:auto;grid-template-columns:repeat(2,auto);gap:4px}
-  .tool{width:clamp(50px,14vw,62px);height:clamp(36px,4.6vh,44px);flex-direction:row;gap:4px;font-size:10px;white-space:nowrap}
-  .tool svg{width:15px;height:15px}
+  .court{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:8px}
+  .side{pointer-events:none}
+  .side .band{min-height:36px;font-size:15px;padding:0 8px}
+  .side .stage{padding:8px}
+  .side .flip{height:min(25vh,42vw);width:100%;font-size:min(23vh,37vw)}
+  .side .meta{display:none}
+  .center{width:clamp(66px,19vw,100px);justify-content:center;gap:10px}
+  .center .tools{display:none}
+  .setlbl{font-size:13px}
+  .setcards .flip{width:clamp(26px,7.5vw,40px);height:clamp(40px,6vh,58px);font-size:clamp(34px,5.2vh,50px)}
+  .arrow svg{width:clamp(36px,12vw,58px)}
+  .pad{display:grid;grid-column:1/-1;grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) auto auto;gap:8px}
+  .pad .to{text-align:center}
+  .pad .tools{grid-column:1/-1;grid-template-columns:repeat(4,1fr)}
+  .pad .tool{height:54px}
 }
 
 .overlay{position:fixed;inset:0;background:#000000c4;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
@@ -189,10 +197,10 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
       <div class="setcards"><div class="flip y" id="sc0"><span class="v">0</span></div><div class="flip y" id="sc1"><span class="v">0</span></div></div>
       <div class="arrow" id="arrow"><svg viewBox="0 0 64 32" fill="currentColor"><path d="M0 16 20 2v9h44v10H20v9z"/></svg><span>SERVE</span></div>
       <div class="tools">
-        <button class="tool" id="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>戻す</button>
-        <button class="tool" id="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>点を直す</button>
-        <button class="tool" id="swap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg>コート</button>
-        <button class="tool" id="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>メニュー</button>
+        <button class="tool" data-act="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>戻す</button>
+        <button class="tool" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>点を直す</button>
+        <button class="tool" data-act="swap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg>コート</button>
+        <button class="tool" data-act="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>メニュー</button>
       </div>
     </div>
     <button class="side" data-pos="1">
@@ -200,6 +208,17 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
       <div class="stage"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">0</span></div></div>
       <div class="meta"><span class="servemark">SERVE</span><span class="to" data-to="1"></span></div>
     </button>
+    <div class="pad" id="pad">
+      <button class="hit" data-pos="0"><b>+1</b><span class="nm"></span></button>
+      <button class="hit" data-pos="1"><b>+1</b><span class="nm"></span></button>
+      <span class="to" data-to="0"></span><span class="to" data-to="1"></span>
+      <div class="tools">
+        <button class="tool" data-act="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>戻す</button>
+        <button class="tool" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>点を直す</button>
+        <button class="tool" data-act="swap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h15l-4-4"/><path d="M20 16H5l4 4"/></svg>コート</button>
+        <button class="tool" data-act="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>メニュー</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -338,20 +357,21 @@ function draw(changed){
     el.querySelector('.nm').textContent=t.name;
     setFlip(el.querySelector('.flip'),state.score[ti],changed===ti);
     el.querySelector('.servemark').classList.toggle('on',state.serve===ti&&!state.done);
-    const to=el.querySelector('.to');to.dataset.team=ti;to.style.display=c.timeouts?'':'none';
-    to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts);
   });
+  $$('.hit').forEach(el=>{const ti=order[+el.dataset.pos],t=c.teams[ti];el.dataset.team=ti;el.style.background=t.c1;el.style.color=t.c2;el.querySelector('.nm').textContent=t.name;el.disabled=state.done||state.setEnded!=null});
+  $$('.to').forEach(to=>{const ti=order[+to.dataset.to];to.dataset.team=ti;to.style.display=c.timeouts?'':'none';
+    to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts)});
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
   const n=state.sets.length+1;
   $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点`;
   // サーブの矢印：サーブ側を指す（縦向きは上下）
   const sPos=order.indexOf(state.serve);
   $('#arrow').style.visibility=state.done?'hidden':'visible';
-  $('#arrow svg').style.transform=portrait()?(sPos===0?'rotate(90deg)':'rotate(-90deg)'):(sPos===0?'none':'scaleX(-1)');
-  $('#undo').disabled=!hist.length;
+  $('#arrow svg').style.transform=sPos===0?'none':'scaleX(-1)';
+  $$('[data-act=undo]').forEach(b=>b.disabled=!hist.length);
   if(state.done)showResult();else if(state.setEnded!=null)showSetEnd();else hideOv();
 }
-addEventListener('resize',()=>state&&$('#board').classList.contains('on')&&draw());
+const redraw=()=>state&&$('#board').classList.contains('on')&&draw();addEventListener('resize',redraw);addEventListener('orientationchange',()=>setTimeout(redraw,200));
 
 function showSetEnd(){
   const c=state.cfg,w=state.setEnded,n=state.sets.length+1,won=wonSets();won[w]++;
@@ -470,14 +490,14 @@ $('#backSetup').onclick=()=>{renderSetup();show('setup')};
 // 試合の画面の操作（押した瞬間に点が入るよう pointerdown で受ける）
 $$('.side').forEach(el=>el.addEventListener('pointerdown',e=>{if(e.target.closest('.to'))return;e.preventDefault();point(+el.dataset.team)}));
 $$('.to').forEach(el=>el.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const ti=+el.dataset.team;if(state.to[ti]>=state.cfg.timeouts)return;snap();state.to[ti]++;vib();persist();draw()}));
-$('#undo').onclick=undo;
-$('#edit').onclick=showEdit;
-$('#swap').onclick=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw()};
-$('#menu').onclick=()=>ov(`<h3>メニュー</h3>
+$$('.hit').forEach(el=>el.addEventListener('pointerdown',e=>{e.preventDefault();point(+el.dataset.team)}));
+const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw()};
+const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
   <button class="sec" data-a="edit">点数を直す</button>
   <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
+$('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
 
 function show(id){
   $$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
