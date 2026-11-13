@@ -142,6 +142,10 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .res .d{font-family:var(--num);letter-spacing:.1em;color:var(--yellow);font-size:14px}
 .pill{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 6px 0 0;vertical-align:0}
 .adslot{margin:18px auto 0;width:320px;max-width:100%;height:50px;border:1px dashed #ffffff33;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--sub);letter-spacing:.08em}
+.help h4{margin:0 0 8px;font-size:16px;font-weight:700;letter-spacing:.02em}
+.help h4::before{content:"";display:inline-block;width:4px;height:14px;background:var(--yellow);margin-right:8px;vertical-align:-1px}
+.help p{margin:0 0 8px;font-size:14px;line-height:1.85;color:#d9dbdf;font-weight:300}
+.help p:last-child{margin-bottom:0}
 .open{height:38px;padding:0 14px;border-radius:4px;border:1px solid var(--line);font-size:13px;flex:none}
 </style>
 </head>
@@ -150,7 +154,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 <!-- はじめの画面：試合の設定 -->
 <section class="screen on" id="setup"><div class="wrap">
   <div class="eyebrow">VOLLEYBALL SCOREBOARD</div>
-  <h1>試合の設定</h1>
+  <div class="row" style="justify-content:space-between;align-items:flex-end"><h1>試合の設定</h1><button class="open" id="toHelp" style="margin-bottom:18px">使い方とルール</button></div>
   <div id="resumeBox"></div>
 
   <div class="panel">
@@ -166,6 +170,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
     <div class="field"><label>デュース<span class="small">2点差がつくまで続ける</span></label><button class="toggle" id="deuce" aria-label="デュース"></button></div>
     <div class="field" id="capRow"><label>上限の点数<span class="small">この点を先に取ったら終わり</span></label><div class="row" style="flex-wrap:nowrap"><button class="toggle" id="capOn" aria-label="上限"></button><div class="num" data-k="cap"></div></div></div>
     <div class="field"><label>タイムアウト<span class="small">1セットの回数</span></label><div class="num" data-k="timeouts"></div></div>
+    <div class="field"><label>セットが変わったら左右を入れ替える<span class="small">得点板の左右もコートに合わせて動かす大会向け</span></label><button class="toggle" id="swapSets" aria-label="左右の入れ替え"></button></div>
   </div>
 
   <div class="teams">
@@ -229,6 +234,49 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   <div class="adslot">広告（試作では枠だけ）</div>
 </div></section>
 
+<!-- 使い方とルール -->
+<section class="screen" id="help"><div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="eyebrow">HOW TO</div><h1>使い方とルール</h1></div><button class="open" data-back style="margin-bottom:18px">もどる</button></div>
+  <div class="panel help">
+    <h4>点を入れるのは、主審の合図を見てから</h4>
+    <p>ボールが床に落ちた瞬間は、まだ点は決まっていません。主審が笛を吹いて、点を取ったチームの側に腕を横に伸ばしたら、そのチームを押します。</p>
+    <p>判定が変わったときや押し間違えたときは「戻す」。何点もずれたときは「点を直す」で数字を打ちこめます。</p>
+  </div>
+  <div class="panel help">
+    <h4>左右は、始める前に決める</h4>
+    <p>どちらのチームを左に出すかは、大会ごとに決め方が違います。始める前に、記録の人やチームの人と「どちらを左にするか」を決めておくと、反対のチームに点を入れる失敗がなくなります。</p>
+    <p>迷ったら、得点板（このスマホ）の位置からコートを見て、左側にいるチームを左にするのが分かりやすいです。</p>
+  </div>
+  <div class="panel help">
+    <h4>セットが変わったら、コートも変わる</h4>
+    <p>セットが終わると、両チームはコートを入れ替えます。このアプリは、次のセットで左右を自動で入れ替えます。得点板の左右を動かさない大会では、設定の「セットが変わったら左右を入れ替える」を切ってください。</p>
+    <p>最終セットは、どちらかが半分の点（15点のセットなら8点）になったところで入れ替えることがあります。その点になったら、アプリがお知らせします。</p>
+    <p>途中で入れ替えたいときは「コート」を押すと、左右が入れ替わります。</p>
+  </div>
+  <div class="panel help">
+    <h4>サーブは、点を取ったチーム</h4>
+    <p>点を取ったチームが、次のサーブを打ちます。黄色の矢印が、サーブを打つチームを指します。押せば自動で動きます。</p>
+  </div>
+  <div class="panel help">
+    <h4>デュースと上限</h4>
+    <p>デュースありの設定では、決まった点数に届いても、2点差がつくまでセットは終わりません。ソフトバレーなど上限がある大会では、上限の点を先に取ったチームがそのセットを取ります。</p>
+  </div>
+  <div class="panel help">
+    <h4>タイムアウト</h4>
+    <p>タイムアウトを取ったチームの「タイム」を押すと、回数が増えます。セットが変わると0に戻ります。</p>
+  </div>
+  <div class="panel help">
+    <h4>人数ごとの点数（よくある形）</h4>
+    <p>6人制　25点・3セット先取（最終セット15点）<br>9人制　21点・2セット先取<br>小学生　21点・2セット先取（3セット目15点）<br>ソフトバレー　15点・2セット先取・17点で打ち切り</p>
+    <p>大会によって違うことがあります。大会の決まりに合わせて、設定の画面で変えてください。</p>
+  </div>
+  <div class="panel help">
+    <h4>結果を送る</h4>
+    <p>試合が終わったら「保存する」。保存した結果は「画像で送る」「文字で送る」から、LINE・BAND・写真など、送り先を選んで送れます。アプリがどこかへ勝手に送ることはありません。</p>
+  </div>
+  <button class="cta" data-back>もどる</button>
+</div></section>
+
 <div class="overlay" id="ov"><div class="modal" id="ovBody"></div></div>
 
 <script>
@@ -264,6 +312,7 @@ function renderSetup(){
   $('#deuce').classList.toggle('on',cfg.deuce);
   $('#capRow').style.display=cfg.deuce?'':'none';
   $('#capOn').classList.toggle('on',cfg.cap!=null);
+  $('#swapSets').classList.toggle('on',cfg.swapSets!==false);
   const saved=load(KEY_TEAMS,[]);
   $$('.team').forEach(el=>{
     const i=+el.dataset.t,t=cfg.teams[i];
@@ -288,6 +337,8 @@ $('#setup').addEventListener('click',e=>{
   else if(b.dataset.s){cfg.setsToWin=+b.dataset.s;cfg.format='custom'}
   else if(b.id==='deuce'){cfg.deuce=!cfg.deuce;cfg.format='custom'}
   else if(b.id==='capOn'){cfg.cap=cfg.cap==null?cfg.points+2:null;cfg.format='custom'}
+  else if(b.id==='swapSets'){cfg.swapSets=cfg.swapSets===false}
+  else if(b.id==='toHelp'){show('help');return}
   else if(b.dataset.c){const[i,k,c]=b.dataset.c.split(':');cfg.teams[+i][k]=c}
   else if(b.dataset.fs){cfg.firstServe=+b.dataset.fs}
   else if(b.id==='start'){startMatch();return}
@@ -333,6 +384,7 @@ function point(team){
   if(state.setEnded!=null||state.done)return;
   snap();state.score[team]++;state.serve=team;vib();
   const w=setWinner();if(w!=null)state.setEnded=w;
+  else if(isFinalSet()&&!state.midDone&&Math.max(...state.score)===Math.ceil(setTarget()/2))state.midAsk=true;
   persist();draw(team);
 }
 function undo(){if(!hist.length)return;state=JSON.parse(hist.pop());vib();persist();draw()}
@@ -340,8 +392,8 @@ function nextSet(){
   snap();
   const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w});
   if(wonSets()[w]>=state.cfg.setsToWin){state.done=true;state.ended=Date.now();persist();draw();return}
-  state.score=[0,0];state.to=[0,0];state.setEnded=null;
-  state.leftTeam=1-state.leftTeam; // セットごとにコートを入れ替える
+  state.score=[0,0];state.to=[0,0];state.setEnded=null;state.midAsk=false;state.midDone=false;
+  if(state.cfg.swapSets!==false)state.leftTeam=1-state.leftTeam; // セットごとにコートを入れ替える
   state.serve=state.sets.length%2===0?state.firstServe:1-state.firstServe;
   persist();draw();
 }
@@ -369,7 +421,7 @@ function draw(changed){
   $('#arrow').style.visibility=state.done?'hidden':'visible';
   $('#arrow svg').style.transform=sPos===0?'none':'scaleX(-1)';
   $$('[data-act=undo]').forEach(b=>b.disabled=!hist.length);
-  if(state.done)showResult();else if(state.setEnded!=null)showSetEnd();else hideOv();
+  if(state.done)showResult();else if(state.setEnded!=null)showSetEnd();else if(state.midAsk)showMid();else hideOv();
 }
 const redraw=()=>state&&$('#board').classList.contains('on')&&draw();addEventListener('resize',redraw);addEventListener('orientationchange',()=>setTimeout(redraw,200));
 
@@ -379,6 +431,14 @@ function showSetEnd(){
     <div class="big">${state.score[0]} - ${state.score[1]}</div>
     <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}</div>
     <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div>`);
+}
+function showMid(){
+  const n=Math.max(...state.score);
+  ov(`<h3>コートチェンジの点です</h3>
+    <div class="big">${state.score[0]} - ${state.score[1]}</div>
+    <div class="sm">最終セットは、どちらかが${n}点になったところで<br>両チームがコートを入れ替えることがあります</div>
+    <div class="btns"><button class="sec" data-a="midKeep">入れ替えない</button><button class="cta" data-a="midSwap">左右を入れ替える</button></div>
+    <button class="sec" data-a="undo">1点戻す</button>`);
 }
 function showResult(){
   const c=state.cfg,won=wonSets(),w=won[0]>won[1]?0:1;
@@ -417,6 +477,9 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='close'){hideOv();state&&$('#board').classList.contains('on')&&draw()}
   else if(a==='edit'){showEdit()}
   else if(a==='end'){hideOv();if(confirm('この試合をやめて、設定の画面にもどりますか？（途中までの点は残りません）')){state.done=true;persist();finish()}else draw()}
+  else if(a==='help'){hideOv();show('help')}
+  else if(a==='midSwap'){snap();state.leftTeam=1-state.leftTeam;state.midAsk=false;state.midDone=true;persist();draw()}
+  else if(a==='midKeep'){state.midAsk=false;state.midDone=true;persist();draw()}
   else if(a==='toSetup'){hideOv();renderSetup();show('setup')}
   else if(a==='share'){await shareImage(load(KEY_RES,[])[+b.dataset.i])}
   else if(a==='shareText'){await shareText(load(KEY_RES,[])[+b.dataset.i])}
@@ -485,6 +548,7 @@ async function shareText(r){
   try{if(navigator.share){await navigator.share({text});return}}catch(e){if(e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(text);alert('結果の文字をコピーしました。送りたいところに貼りつけてください。')}catch(e){prompt('この文字をコピーしてください',text)}
 }
+$$('[data-back]').forEach(b=>b.onclick=()=>{if(state&&!state.done)show('board');else{renderSetup();show('setup')}});
 $('#backSetup').onclick=()=>{renderSetup();show('setup')};
 
 // 試合の画面の操作（押した瞬間に点が入るよう pointerdown で受ける）
@@ -495,6 +559,7 @@ const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw
 const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
   <button class="sec" data-a="edit">点数を直す</button>
+  <button class="sec" data-a="help">使い方とルール</button>
   <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
 $('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
