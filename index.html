@@ -100,10 +100,11 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 
 /* 縦向き：上下に2チーム */
 .pad{display:none}
-.hit{border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:inset 0 0 0 1px #ffffff1a}
-.hit:active{filter:brightness(1.18);transform:scale(.99)}
-.hit b{font-family:var(--num);font-weight:400;font-size:clamp(56px,11vh,110px);line-height:1;padding-top:.06em}
-.hit .nm{font-size:15px;font-weight:700;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hit{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#ffffff08;border:1px solid #ffffff1f;color:var(--text);position:relative;overflow:hidden}
+.hit::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--tc,transparent)}
+.hit:active{background:#ffffff1a;transform:scale(.99)}
+.hit b{font-family:var(--num);font-weight:400;font-size:clamp(44px,8vh,80px);line-height:1;padding-top:.06em;color:var(--text)}
+.hit .nm{font-size:13px;font-weight:300;letter-spacing:.04em;color:var(--sub);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* 縦向き：上に得点を横ならび、下で操作 */
 @media (orientation:portrait){
   .court{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:8px}
@@ -410,7 +411,7 @@ function draw(changed){
     setFlip(el.querySelector('.flip'),state.score[ti],changed===ti);
     el.querySelector('.servemark').classList.toggle('on',state.serve===ti&&!state.done);
   });
-  $$('.hit').forEach(el=>{const ti=order[+el.dataset.pos],t=c.teams[ti];el.dataset.team=ti;el.style.background=t.c1;el.style.color=t.c2;el.querySelector('.nm').textContent=t.name;el.disabled=state.done||state.setEnded!=null});
+  $$('.hit').forEach(el=>{const ti=order[+el.dataset.pos],t=c.teams[ti];el.dataset.team=ti;el.style.setProperty('--tc',t.c1);el.querySelector('.nm').textContent=t.name;el.disabled=state.done||state.setEnded!=null});
   $$('.to').forEach(to=>{const ti=order[+to.dataset.to];to.dataset.team=ti;to.style.display=c.timeouts?'':'none';
     to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts)});
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
