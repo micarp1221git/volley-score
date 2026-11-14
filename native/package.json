@@ -1,0 +1,11 @@
+{
+  "name": "mekuri-tokuten-native",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/cli": "8.5.0",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/ios": "8.5.0"
+  }
+}

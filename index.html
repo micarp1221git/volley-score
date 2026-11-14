@@ -271,7 +271,6 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
   <button class="cta" id="start">試合をはじめる</button>
   <button class="sec" id="toResults">これまでの結果</button>
   <p class="foot">データはこの端末の中だけに保存されます</p>
-  <div class="adslot">広告（試作では枠だけ）</div>
 </div></section>
 
 <!-- 試合の画面 -->
@@ -319,7 +318,6 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
 <section class="screen" id="results"><div class="wrap">
   <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="eyebrow">RESULTS</div><h1>これまでの結果</h1></div><button class="open" id="backSetup" style="margin-bottom:18px">もどる</button></div>
   <div class="panel" id="resList"></div>
-  <div class="adslot">広告（試作では枠だけ）</div>
 </div></section>
 
 <!-- 使い方とルール -->
@@ -705,6 +703,8 @@ const awakeOn=()=>load(KEY_AWAKE,true)!==false;
 async function keepAwake(){
   const want=awakeOn()&&$('#board').classList.contains('on')&&document.visibilityState==='visible';
   try{
+    const KA=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.KeepAwake; // アプリ版は端末の機能で消さない（古いiPhoneでも効く）
+    if(KA){if(want&&!lock){await KA.keepAwake();lock={native:true}}else if(!want&&lock){await KA.allowSleep();lock=null}return}
     if(want&&!lock&&navigator.wakeLock){lock=await navigator.wakeLock.request('screen');lock.addEventListener('release',()=>{lock=null})}
     else if(!want&&lock){await lock.release();lock=null}
   }catch(e){lock=null}
@@ -712,7 +712,7 @@ async function keepAwake(){
 document.addEventListener('visibilitychange',keepAwake);
 document.addEventListener('pointerdown',()=>{if(!lock)keepAwake()}); // 開き直した直後は、最初に触ったときに取る
 function renderAwake(){$('#awake').classList.toggle('on',awakeOn());
-  if(!('wakeLock' in navigator))$('#awakeNote').textContent='このブラウザでは使えません。スマホの設定の「自動ロック」を「なし」にしてください'}
+  if(!('wakeLock' in navigator)&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()))$('#awakeNote').textContent='このブラウザでは使えません。スマホの設定の「自動ロック」を「なし」にしてください'}
 $('#awake').onclick=()=>{save(KEY_AWAKE,!awakeOn());renderAwake();keepAwake()};
 function show(id){
   $$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
