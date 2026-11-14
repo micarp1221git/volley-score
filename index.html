@@ -550,7 +550,7 @@ function showResult(){
 // 試合の途中で決まりを変える（11/14 みかさん「試合の途中でも得点上限とか変更できる？」）。「戻す」で元に戻せる
 function showRules(){
   const c=state.cfg,n=(k,v,min,max,lbl,sm)=>`<div class="field"><label>${lbl}${sm?`<span class="small">${sm}</span>`:''}</label><input type="number" inputmode="numeric" min="${min}" max="${max}" value="${v}" data-r="${k}" style="width:72px;height:44px;text-align:center;border-radius:4px;border:0;background:var(--card);color:var(--ink);font-family:var(--num);font-size:28px;padding-top:4px"></div>`;
-  ov(`<h3>試合の決まりを変える</h3><div class="sm">いまの点はそのまま。変えた決まりは、いまのセットから使います</div>
+  ov(`<h3>今進んでいる試合の設定をかえる</h3><div class="sm">いまの点はそのまま。変えた設定は、いまのセットから使います</div>
     <div style="text-align:left;margin-top:10px">
     ${n('points',c.points,1,99,'1セットの点数')}
     ${c.setsToWin>1?n('finalPoints',c.finalPoints,1,99,'最終セットの点数'):''}
@@ -693,7 +693,7 @@ const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw
 const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
   <button class="sec" data-a="edit">点数を直す</button>
-  <button class="sec" data-a="rules">試合の決まりを変える（点数・上限など）</button>
+  <button class="sec" data-a="rules">今進んでいる試合の設定をかえる</button>
   <button class="sec" data-a="help">使い方とルール</button>
   <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
