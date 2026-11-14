@@ -250,6 +250,7 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
   <div class="panel">
     <h2>画面の色</h2>
     <div class="seg" style="grid-template-columns:1fr 1fr" id="theme"><button data-th="light">明るい</button><button data-th="dark">暗い</button></div>
+    <div class="field" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><label>試合中は画面を消さない<span class="small" id="awakeNote">スマホが自動で暗くならないようにします</span></label><button class="toggle" id="awake" aria-label="画面を消さない"></button></div>
   </div>
 
   <button class="cta" id="start">試合をはじめる</button>
@@ -645,9 +646,25 @@ const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
 $('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
 
+// 試合中は画面を消さない（11/14 みかさん）。ブラウザの Wake Lock を使う。アプリに切り替えたら戻ってきたときに取り直す
+const KEY_AWAKE='vb.awake';let lock=null;
+const awakeOn=()=>load(KEY_AWAKE,true)!==false;
+async function keepAwake(){
+  const want=awakeOn()&&$('#board').classList.contains('on')&&document.visibilityState==='visible';
+  try{
+    if(want&&!lock&&navigator.wakeLock){lock=await navigator.wakeLock.request('screen');lock.addEventListener('release',()=>{lock=null})}
+    else if(!want&&lock){await lock.release();lock=null}
+  }catch(e){lock=null}
+}
+document.addEventListener('visibilitychange',keepAwake);
+document.addEventListener('pointerdown',()=>{if(!lock)keepAwake()}); // 開き直した直後は、最初に触ったときに取る
+function renderAwake(){$('#awake').classList.toggle('on',awakeOn());
+  if(!('wakeLock' in navigator))$('#awakeNote').textContent='このブラウザでは使えません。スマホの設定の「自動ロック」を「なし」にしてください'}
+$('#awake').onclick=()=>{save(KEY_AWAKE,!awakeOn());renderAwake();keepAwake()};
 function show(id){
   $$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
   if(id==='board'){hist=load(KEY+'.hist',[]);draw()}
+  keepAwake();
 }
 // 画面の色（この端末に覚える）
 const KEY_THEME='vb.theme';
@@ -655,6 +672,7 @@ function applyTheme(t){document.documentElement.dataset.theme=t;$$('#theme butto
   const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#141518':'#f6f5f1'}
 $$('#theme button').forEach(b=>b.onclick=()=>{save(KEY_THEME,b.dataset.th);applyTheme(b.dataset.th)});
 applyTheme(load(KEY_THEME,'light'));
+renderAwake();
 (function init(){
   renderSetup();
   const st=load(KEY,null);
