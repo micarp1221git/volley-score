@@ -48,7 +48,7 @@ h2{font-size:12px;color:var(--sub);font-weight:400;letter-spacing:.12em;margin:0
 .teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:600px){.teams{grid-template-columns:1fr}}
 .team input[type=text]{width:100%;height:46px;border-radius:4px;border:1px solid #33373e;background:#101114;color:var(--text);padding:0 12px;font-size:17px}
-.swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
 .sw{aspect-ratio:1;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff26;position:relative}
 .sw.on::after{content:"";position:absolute;inset:-4px;border:2px solid var(--yellow);border-radius:6px}
 .lbl{font-size:11px;color:var(--sub);letter-spacing:.1em;margin-top:14px}
@@ -131,6 +131,42 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   .pad .tool{height:54px}
 }
 
+/* ===== 11/14 みかさん確定の見た目: 白い地・上に黒板（名前と終わったセット・赤丸のサーブ矢印）・めくりカードの外枠は上半分＝チームの1色目／下半分＝2色目 ===== */
+#board{background:#fbfbf8;color:#141414;--text:#141414;--sub:#6b6b66}
+.court{grid-template-rows:auto minmax(0,1fr);row-gap:clamp(8px,2vh,16px)}
+.chalk{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);background:#1f4a39;color:#f4f4ee;border-bottom:4px solid #142f25;border-radius:6px;overflow:hidden;min-height:clamp(54px,15vh,74px)}
+.plate{display:flex;flex-direction:column;justify-content:center;padding:4px 18px;min-width:0}
+.plate.r{align-items:flex-end}
+.plate .tn{font-size:clamp(16px,4.6vmin,24px);font-weight:700;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.plate .past{display:flex;gap:8px;margin-top:2px;font-family:var(--num);font-size:clamp(15px,4vmin,21px);letter-spacing:.04em;color:#cfd8d2;min-height:1.2em}
+.plate .past i{font-style:normal;padding:1px 5px 0}
+.plate .past i.w{color:#ffe17a;border:1.5px solid #ffe17a;border-radius:50%}
+.sign{background:#121212;display:flex;align-items:center;justify-content:center;padding:0 clamp(10px,2vw,16px)}
+.sign .circle{width:clamp(40px,11vmin,54px);aspect-ratio:1;border-radius:50%;background:#d8302a;box-shadow:inset 0 0 0 3px #fff;display:flex;align-items:center;justify-content:center}
+.sign svg{width:64%;fill:#fff;transition:transform .2s}
+.sign.off .circle{opacity:.25}
+.side{background:transparent}
+.side .band,.side .sets,.servemark,#arrow{display:none!important}
+.stage{min-height:0;padding:clamp(4px,1.5vmin,12px)}
+.fr{display:flex;padding:clamp(10px,2.6vmin,22px);border-radius:14px;background:linear-gradient(180deg,var(--c1,#888) 0 50%,var(--c2,#ccc) 50% 100%);box-shadow:0 0 0 1px #0000001a,0 8px 18px #0002;max-width:100%;max-height:100%}
+.side .flip{height:min(46vh,100%);width:min(62vh,38vw);font-size:min(44vh,26vw);box-shadow:0 1px 0 #fff inset,0 6px 14px #0003}
+.setlbl b{color:#141414}
+.setcards .flip{box-shadow:0 6px 14px #0003}
+.to{border-color:#d8d6cf;color:#141414}
+.tool{background:#fff;border-color:#e2e0d9;color:#333}
+.hit{background:#fff;border-color:#e2e0d9;color:#141414}
+.hit:active{background:#f0efea}
+.hit::before{height:5px}
+@media (orientation:portrait){
+  .court{grid-template-rows:auto auto minmax(0,1fr)}
+  .chalk{min-height:64px}
+  .plate{padding:4px 10px}
+  .side .stage{padding:4px}
+  .fr{padding:8px;border-radius:10px}
+  .side .flip{height:min(20vh,30vw);width:min(36vw,100%);font-size:min(18vh,27vw)}
+  .pad{grid-row:3}
+}
+
 .overlay{position:fixed;inset:0;background:#000000c4;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
 .overlay.on{display:flex}
 .modal{background:var(--board2);border:1px solid var(--line);border-radius:8px;padding:22px;max-width:520px;width:100%;max-height:92vh;overflow:auto;text-align:center}
@@ -200,10 +236,11 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 <!-- 試合の画面 -->
 <section class="screen" id="board">
   <div class="court">
+    <div class="chalk"><div class="plate" data-pos="0"><span class="tn"></span><span class="past"></span></div><div class="sign" id="sign"><div class="circle"><svg viewBox="0 0 64 40"><path d="M0 20 24 2v11h40v14H24v11z"/></svg></div></div><div class="plate r" data-pos="1"><span class="tn"></span><span class="past"></span></div></div>
     <button class="side" data-pos="0">
       <div class="band"><span class="nm"></span></div>
       <div class="sets"></div>
-      <div class="stage"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">0</span></div></div>
+      <div class="stage"><div class="fr"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">0</span></div></div></div>
       <div class="meta"><span class="to" data-to="0"></span><span class="servemark">SERVE</span></div>
     </button>
     <div class="center">
@@ -220,7 +257,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
     <button class="side" data-pos="1">
       <div class="band"><span class="nm"></span></div>
       <div class="sets"></div>
-      <div class="stage"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">0</span></div></div>
+      <div class="stage"><div class="fr"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">0</span></div></div></div>
       <div class="meta"><span class="servemark">SERVE</span><span class="to" data-to="1"></span></div>
     </button>
     <div class="pad" id="pad">
@@ -265,7 +302,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   </div>
   <div class="panel help">
     <h4>サーブは、点を取ったチーム</h4>
-    <p>点を取ったチームが、次のサーブを打ちます。黄色の矢印が、サーブを打つチームを指します。押せば自動で動きます。</p>
+    <p>点を取ったチームが、次のサーブを打ちます。上の黒板のまん中にある赤い丸の矢印が、サーブを打つチームを指します。押せば自動で動きます。</p>
   </div>
   <div class="panel help">
     <h4>デュースと上限</h4>
@@ -298,7 +335,7 @@ const FORMATS={
   kids:{label:'小学生',points:21,finalPoints:15,setsToWin:2,deuce:true,cap:null,timeouts:2,note:'21点・2セット先取（3セット目15点）が多い形'},
   soft:{label:'ソフト',points:15,finalPoints:15,setsToWin:2,deuce:true,cap:17,timeouts:2,note:'ソフトバレー：15点・2セット先取・17点で打ち切り'}
 };
-const COLORS=['#e0322b','#f26a21','#ffd21f','#1f9d55','#1f5b46','#1e88d6','#1d3f8f','#14213d','#6d2fb5','#e2588f','#16171a','#7a7f87','#f6f5f0','#8a5a34'];
+const COLORS=['#e0322b','#f26a21','#ffd21f','#1f9d55','#1f5b46','#29a6d9','#1e88d6','#1d3f8f','#14213d','#6d2fb5','#e2588f','#16171a','#7a7f87','#f6f5f0','#8a5a34'];
 const KEY='vb.state.v1',KEY_RES='vb.results.v1',KEY_TEAMS='vb.teams.v1',KEY_LAST='vb.last.v1';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
@@ -308,7 +345,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const pick=f=>({points:f.points,finalPoints:f.finalPoints,setsToWin:f.setsToWin,deuce:f.deuce,cap:f.cap,timeouts:f.timeouts});
 
 // ---------- 設定 ----------
-let cfg=load(KEY_LAST,null)||{format:'six',...pick(FORMATS.six),teams:[{name:'ホーム',c1:'#1d3f8f',c2:'#f6f5f0'},{name:'アウェイ',c1:'#e0322b',c2:'#f6f5f0'}],firstServe:0};
+let cfg=load(KEY_LAST,null)||{format:'six',...pick(FORMATS.six),teams:[{name:'ホーム',c1:'#1d3f8f',c2:'#29a6d9'},{name:'アウェイ',c1:'#e0322b',c2:'#f6f5f0'}],firstServe:0};
 
 function renderSetup(){
   $('#formats').innerHTML=Object.entries(FORMATS).map(([k,f])=>`<button class="${cfg.format===k?'on':''}" data-f="${k}">${f.label}</button>`).join('');
@@ -329,9 +366,9 @@ function renderSetup(){
     el.innerHTML=`<h2>チーム ${i?'B':'A'}</h2>
       ${saved.length?`<select data-pick="${i}"><option value="">保存したチームから選ぶ</option>${saved.map((s,j)=>`<option value="${j}">${esc(s.name)}</option>`).join('')}</select>`:''}
       <input type="text" maxlength="16" value="${esc(t.name)}" data-name="${i}" placeholder="チーム名">
-      <div class="lbl">チームの色</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c1===c?'on':''}" style="background:${c}" data-c="${i}:c1:${c}" aria-label="色"></button>`).join('')}</div>
-      <div class="lbl">名前の文字の色</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c2===c?'on':''}" style="background:${c}" data-c="${i}:c2:${c}" aria-label="色"></button>`).join('')}</div>
-      <div class="mini"><div style="width:180px;border-radius:6px;overflow:hidden;background:#ffffff08"><div class="band" style="min-height:40px;font-size:16px;background:${t.c1};color:${t.c2}"><span class="nm">${esc(t.name)||'チーム'}</span></div><div style="padding:12px;display:flex;justify-content:center"><div class="flip" style="width:110px;height:96px;font-size:88px"><div class="rings"><i></i><i></i></div><span class="v">12</span></div></div></div></div>`;
+      <div class="lbl">チームの色（1色目・カードの枠の上半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c1===c?'on':''}" style="background:${c}" data-c="${i}:c1:${c}" aria-label="色"></button>`).join('')}</div>
+      <div class="lbl">2色目（カードの枠の下半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c2===c?'on':''}" style="background:${c}" data-c="${i}:c2:${c}" aria-label="色"></button>`).join('')}</div>
+      <div class="mini"><div class="fr" style="--c1:${t.c1};--c2:${t.c2};padding:12px;border-radius:12px"><div class="flip" style="width:120px;height:100px;font-size:92px"><div class="rings"><i></i><i></i></div><span class="v">12</span></div></div></div>`;
   });
   renderFirstServe();
   const st=load(KEY,null);
@@ -419,6 +456,7 @@ function draw(changed){
     el.querySelector('.nm').textContent=t.name;
     setFlip(el.querySelector('.flip'),state.score[ti],changed===ti);
     el.querySelector('.servemark').classList.toggle('on',state.serve===ti&&!state.done);
+    el.style.setProperty('--c1',t.c1);el.style.setProperty('--c2',t.c2);
     el.querySelector('.sets').innerHTML=state.sets.map(x=>`<i class="${x.w===ti?'w':''}">${ti?x.b:x.a}</i>`).join('');
   });
   $$('.hit').forEach(el=>{const ti=order[+el.dataset.pos],t=c.teams[ti];el.dataset.team=ti;el.style.setProperty('--tc',t.c1);el.querySelector('.nm').textContent=t.name;el.disabled=state.done||state.setEnded!=null});
@@ -427,6 +465,10 @@ function draw(changed){
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
   const n=state.sets.length+1;
   $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点`;
+  $$('.plate').forEach(pl=>{const ti=order[+pl.dataset.pos];pl.querySelector('.tn').textContent=c.teams[ti].name;
+    pl.querySelector('.past').innerHTML=state.sets.map(x=>`<i class="${x.w===ti?'w':''}">${ti?x.b:x.a}</i>`).join('')});
+  $('#sign').classList.toggle('off',state.done);
+  $('#sign svg').style.transform=order.indexOf(state.serve)===0?'none':'scaleX(-1)';
   // サーブの矢印：サーブ側を指す（縦向きは上下）
   const sPos=order.indexOf(state.serve);
   $('#arrow').style.visibility=state.done?'hidden':'visible';
@@ -514,7 +556,7 @@ function resultCanvas(r){
   [0,1].forEach(i=>{
     const t=r.teams[i],x=cx[i];
     g.fillStyle=t.c1;rr(g,x,140,cw,80,6,true,false);g.fill();
-    g.fillStyle=t.c2;g.font=`700 40px ${JP}`;fit(g,t.name,x+cw/2,194,cw-30,40,`700 %spx ${JP}`);
+    g.fillStyle=ink(t.c1);g.font=`700 40px ${JP}`;fit(g,t.name,x+cw/2,194,cw-30,40,`700 %spx ${JP}`);
     g.fillStyle='#f6f5f0';rr(g,x,220,cw,330,6,false,true);g.fill();
     g.fillStyle='#0000001f';g.fillRect(x,384,cw,3);
     g.fillStyle='#16171a';g.font=`330px ${NUM}`;g.fillText(r.won[i],x+cw/2,520);
@@ -524,6 +566,8 @@ function resultCanvas(r){
   r.sets.forEach((s,i)=>{g.fillStyle='#9a9ea6';g.font=`30px ${JP}`;g.fillText(`第${i+1}セット`,W/2,642+i*76-8);g.fillStyle='#f4f4f0';g.font=`60px ${NUM}`;g.textAlign='right';g.fillText(s.a,W/2-150,642+i*76);g.textAlign='left';g.fillText(s.b,W/2+150,642+i*76);g.textAlign='center'});
   return cv;
 }
+// 地の色に合わせて文字を白か黒に（2色目は枠の色になったので、名前の文字には使わない）
+function ink(h){const n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?'#16171a':'#ffffff'}
 function rr(g,x,y,w,h,r,top,bottom){const t=top?r:0,b=bottom?r:0;g.beginPath();g.moveTo(x+t,y);g.lineTo(x+w-t,y);g.quadraticCurveTo(x+w,y,x+w,y+t);g.lineTo(x+w,y+h-b);g.quadraticCurveTo(x+w,y+h,x+w-b,y+h);g.lineTo(x+b,y+h);g.quadraticCurveTo(x,y+h,x,y+h-b);g.lineTo(x,y+t);g.quadraticCurveTo(x,y,x+t,y);g.closePath()}
 function fit(g,s,x,y,max,size,tpl){while(size>20){g.font=tpl.replace('%s',size);if(g.measureText(s).width<=max)break;size-=2}g.fillText(s,x,y)}
 async function shareImage(r){
