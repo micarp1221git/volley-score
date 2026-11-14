@@ -547,6 +547,36 @@ function showResult(){
     <div class="btns"><button class="sec" data-a="undo">戻す</button><button class="cta" data-a="saveOnly">保存する</button></div>`);
 }
 // 点数を直す：打ちこんだ数字で、いまのセットとこれまでのセットを直す
+// 試合の途中で決まりを変える（11/14 みかさん「試合の途中でも得点上限とか変更できる？」）。「戻す」で元に戻せる
+function showRules(){
+  const c=state.cfg,n=(k,v,min,max,lbl,sm)=>`<div class="field"><label>${lbl}${sm?`<span class="small">${sm}</span>`:''}</label><input type="number" inputmode="numeric" min="${min}" max="${max}" value="${v}" data-r="${k}" style="width:72px;height:44px;text-align:center;border-radius:4px;border:0;background:var(--card);color:var(--ink);font-family:var(--num);font-size:28px;padding-top:4px"></div>`;
+  ov(`<h3>試合の決まりを変える</h3><div class="sm">いまの点はそのまま。変えた決まりは、いまのセットから使います</div>
+    <div style="text-align:left;margin-top:10px">
+    ${n('points',c.points,1,99,'1セットの点数')}
+    ${c.setsToWin>1?n('finalPoints',c.finalPoints,1,99,'最終セットの点数'):''}
+    ${n('setsToWin',c.setsToWin,1,5,'何セット先取')}
+    <div class="field"><label>デュース<span class="small">2点差がつくまで続ける</span></label><button class="toggle ${c.deuce?'on':''}" data-r="deuce" aria-label="デュース"></button></div>
+    ${n('cap',c.cap??'',0,99,'上限の点数','空にすると上限なし')}
+    ${n('timeouts',c.timeouts,0,9,'タイムアウトの回数')}
+    </div>
+    <div class="btns"><button class="sec" data-a="close">やめる</button><button class="cta" data-a="applyRules">変える</button></div>`);
+  $('[data-r=deuce]').onclick=e=>e.currentTarget.classList.toggle('on');
+}
+function applyRules(){
+  const v=k=>{const el=$(`[data-r="${k}"]`);return el?el.value.trim():null},num=(k,d,min,max)=>{const x=parseInt(v(k),10);return isNaN(x)?d:Math.max(min,Math.min(max,x))};
+  const c=state.cfg,nc={...c};
+  nc.points=num('points',c.points,1,99);
+  if(v('finalPoints')!=null)nc.finalPoints=num('finalPoints',c.finalPoints,1,99);
+  nc.setsToWin=num('setsToWin',c.setsToWin,1,5);
+  nc.deuce=$('[data-r=deuce]').classList.contains('on');
+  nc.cap=v('cap')===''?null:num('cap',c.cap??nc.points+2,1,99);
+  nc.timeouts=num('timeouts',c.timeouts,0,9);
+  if(nc.setsToWin===1)nc.finalPoints=nc.points;
+  const won=wonSets();if(Math.max(...won)>=nc.setsToWin&&!state.done){alert('もう'+nc.setsToWin+'セット取ったチームがいます。何セット先取は、いまより大きい数にしてください。');return}
+  snap();state.cfg=nc;
+  if(!state.done){state.setEnded=setWinner();if(state.setEnded==null)state.midAsk=false}
+  hideOv();persist();draw();
+}
 function showEdit(){
   const c=state.cfg,row=(lbl,a,b,i)=>`<div class="h">${lbl}</div><input type="number" inputmode="numeric" min="0" max="99" value="${a}" data-e="${i}:a"><div class="h">-</div><input type="number" inputmode="numeric" min="0" max="99" value="${b}" data-e="${i}:b">`;
   ov(`<h3>点数を直す</h3><div class="sm">数字を打ちこんで「直す」を押してください</div>
@@ -572,6 +602,8 @@ $('#ov').addEventListener('click',async e=>{
   if(a==='undo')undo();
   else if(a==='next')nextSet();
   else if(a==='applyEdit')applyEdit();
+  else if(a==='rules')showRules();
+  else if(a==='applyRules')applyRules();
   else if(a==='saveOnly'){saveResult();finish();openResult(0)}
   else if(a==='close'){hideOv();state&&$('#board').classList.contains('on')&&draw()}
   else if(a==='edit'){showEdit()}
@@ -661,6 +693,7 @@ const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw
 const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
   <button class="sec" data-a="edit">点数を直す</button>
+  <button class="sec" data-a="rules">試合の決まりを変える（点数・上限など）</button>
   <button class="sec" data-a="help">使い方とルール</button>
   <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
