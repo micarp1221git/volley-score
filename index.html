@@ -165,7 +165,22 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   .side .stage{padding:4px}
   .fr{padding:8px;border-radius:10px}
   .side .flip{height:min(20vh,30vw);width:calc(50vw - 84px);font-size:min(18vh,25vw)}
-  .pad{grid-row:3}
+  /* 縦: 黒板 → セット（横ならび）→ 得点カードを左右半分ずつ大きく → 操作 */
+  .court{grid-template-columns:1fr 1fr;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"chalk chalk" "mid mid" "l r" "pad pad"}
+  .chalk{grid-area:chalk}
+  .center{grid-area:mid;width:auto;flex-direction:row;justify-content:center;gap:14px}
+  .center .setlbl b{display:inline;font-size:1.3em;margin-right:6px}
+  .side[data-pos="0"]{grid-area:l}.side[data-pos="1"]{grid-area:r}
+  .side{align-self:center}
+  .side .flip{width:calc(50vw - 46px)!important;height:min(26vh,calc(50vw - 30px))!important;font-size:min(24vh,38vw)!important}
+  .pad{grid-area:pad;grid-row:auto;grid-template-rows:auto auto auto;gap:10px}
+  /* 11/14 みかさん「得点のボタン大きすぎる・ほかのボタンも押しやすく」: +1 は高さを決めて、空いた分は上へ。タイムと道具を大きく */
+  .pad .hit{height:clamp(150px,27vh,250px)}
+  .pad .hit b{font-size:clamp(48px,7.5vh,72px)}
+  .pad .to{height:62px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .pad .to .jp{font-size:.6em}
+  .pad .tool{height:72px;font-size:14px;gap:4px}
+  .pad .tool svg{width:26px;height:26px}
 }
 
 .overlay{position:fixed;inset:0;background:#000000c4;display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
@@ -342,6 +357,11 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
     <h4>人数ごとの点数（よくある形）</h4>
     <p>6人制　25点・3セット先取（最終セット15点）<br>9人制　21点・2セット先取<br>小学生　21点・2セット先取（3セット目15点）<br>ソフトバレー　15点・2セット先取・17点で打ち切り</p>
     <p>大会によって違うことがあります。大会の決まりに合わせて、設定の画面で変えてください。</p>
+  </div>
+  <div class="panel help">
+    <h4>試合中は画面を消さない</h4>
+    <p>設定の「試合中は画面を消さない」をオンにしておくと、試合の画面を開いている間はスマホが自動で暗くなりません。設定や結果の画面に戻ると、ふだんどおりに戻ります。</p>
+    <p>古いiPhone（iOS 16.3より前）など、この機能が使えないときは、スイッチの下にお知らせが出ます。そのときは、スマホの「設定」→「画面表示と明るさ」→「自動ロック」を「なし」にしてください。試合が終わったら元に戻すのを忘れずに。</p>
   </div>
   <div class="panel help">
     <h4>結果を送る</h4>
