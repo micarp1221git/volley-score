@@ -53,6 +53,10 @@ h2{font-size:12px;color:var(--sub);font-weight:400;letter-spacing:.12em;margin:0
 .namebox .pen{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--sub);pointer-events:none}
 .namebox input:focus{border-color:var(--yellow);outline:none}
 .namebox input:focus+.pen{color:var(--yellow)}
+.bookrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.bookrow .pill{width:14px;height:14px;margin:0;flex:none}
+.bookrow input{flex:1;min-width:0;height:44px;border-radius:4px;border:1px solid #33373e;background:#101114;color:var(--text);padding:0 12px;font-size:16px}
+html[data-theme=light] .bookrow input{background:#fff;border-color:#dcdad3;color:#16171a}
 .lbl .hint{color:var(--text);font-weight:700;letter-spacing:.04em;margin-left:6px}
 .swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
 .sw{aspect-ratio:1;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff26;position:relative}
@@ -263,6 +267,8 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
     <div class="panel team" data-t="1"></div>
   </div>
 
+  <div class="panel" id="teamBook"></div>
+
   <div class="panel">
     <h2>最初のサーブ</h2>
     <div class="seg" style="grid-template-columns:1fr 1fr" id="firstServe"></div>
@@ -415,14 +421,21 @@ function renderSetup(){
     el.innerHTML=`<h2>チーム ${i?'B':'A'}</h2>
       <div class="lbl" style="margin-top:4px">チーム名<span class="hint">タップして書きかえ</span></div>
       <label class="namebox"><input type="text" maxlength="16" value="${esc(t.name)}" data-name="${i}" placeholder="チーム名を入力"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></label>
-      ${saved.length?`<div class="lbl">前に対戦したチーム</div><select data-pick="${i}" style="margin-top:6px"><option value="">前に対戦したチームから選ぶ</option>${saved.map((s,j)=>`<option value="${j}">${esc(s.name)}</option>`).join('')}</select>`:''}
+      ${saved.some(s=>s.name)?`<div class="lbl">登録・対戦したチーム</div><select data-pick="${i}" style="margin-top:6px"><option value="">登録・対戦したチームから選ぶ</option>${saved.map((s,j)=>s.name?`<option value="${j}">${esc(s.name)}</option>`:'').join('')}</select>`:''}
       <div class="lbl">チームの色（1色目・カードの枠の上半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c1===c?'on':''}" style="background:${c}" data-c="${i}:c1:${c}" aria-label="色"></button>`).join('')}</div>
       <div class="lbl">2色目（カードの枠の下半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c2===c?'on':''}" style="background:${c}" data-c="${i}:c2:${c}" aria-label="色"></button>`).join('')}</div>
       <div class="mini"><div class="fr" style="--c1:${t.c1};--c2:${t.c2};padding:12px;border-radius:12px"><div class="flip" style="width:120px;height:100px;font-size:92px"><div class="rings"><i></i><i></i></div><span class="v">12</span></div></div></div>`;
   });
-  renderFirstServe();
+  renderFirstServe();renderBook();
   const st=load(KEY,null);
   $('#resumeBox').innerHTML=st&&!st.done?`<div class="panel" style="border-color:var(--yellow)"><h2 style="color:var(--yellow)">途中の試合があります</h2><div style="font-size:15px;margin-bottom:12px">${esc(st.cfg.teams[0].name)} <span style="font-family:var(--num);font-size:22px;letter-spacing:.06em">${st.score[0]} - ${st.score[1]}</span> ${esc(st.cfg.teams[1].name)}<span class="note" style="margin-left:8px">第${st.sets.length+1}セット</span></div><button class="cta" id="resume" style="margin-top:0">続きから</button></div>`:'';
+}
+// チームの登録（11/15 みかさん「大会のときとか先に複数入力しておきたいから、チーム名入力箇所作って」）。試合で使ったチームと同じ一覧に入る
+function renderBook(){
+  const book=load(KEY_TEAMS,[]);
+  $('#teamBook').innerHTML=`<h2>チームの登録</h2><p class="note" style="margin-top:0">大会などで、先にチーム名を入れておけます。上のチームA・Bの「登録・対戦したチームから選ぶ」で選べます。</p>
+    ${book.map((t,j)=>`<div class="bookrow"><span class="pill" style="background:${t.c1}"></span><input type="text" maxlength="16" value="${esc(t.name)}" data-book="${j}" placeholder="チーム名を入力"><button class="open" data-bdel="${j}">消す</button></div>`).join('')}
+    <button class="sec" id="bookAdd" style="margin-top:12px">＋ チームを追加</button>`;
 }
 function renderFirstServe(){$('#firstServe').innerHTML=[0,1].map(i=>`<button class="${cfg.firstServe===i?'on':''}" data-fs="${i}">${esc(cfg.teams[i].name)||(i?'B':'A')}</button>`).join('')}
 function clampK(k,v){v=Math.max(k==='timeouts'?0:1,Math.min(99,v|0));if(k==='cap')cfg.cap=Math.max(v,cfg.points+1);else cfg[k]=v;cfg.format='custom'}
@@ -441,18 +454,21 @@ $('#setup').addEventListener('click',e=>{
   else if(b.id==='start'){startMatch();return}
   else if(b.id==='resume'){state=load(KEY,null);show('board');return}
   else if(b.id==='toResults'){renderResults();show('results');return}
+  else if(b.id==='bookAdd'){const book=load(KEY_TEAMS,[]).filter(t=>t.name);const c1=COLORS[(book.length*4)%COLORS.length];book.push({name:'',c1,c2:c1});save(KEY_TEAMS,book.slice(-40));renderSetup();const ins=$$('[data-book]');ins[ins.length-1].focus();return}
+  else if(b.dataset.bdel!=null){const book=load(KEY_TEAMS,[]);if(book[+b.dataset.bdel]?.name&&!confirm(`「${book[+b.dataset.bdel].name}」を一覧から消しますか？`))return;book.splice(+b.dataset.bdel,1);save(KEY_TEAMS,book);renderSetup();return}
   else return;
   save(KEY_LAST,cfg);renderSetup();
 });
 $('#setup').addEventListener('change',e=>{
   const t=e.target;
+  if(t.dataset.book!=null){const book=load(KEY_TEAMS,[]),j=+t.dataset.book,v=t.value.trim();if(!v)book.splice(j,1);else if(book.some((x,k)=>k!==j&&x.name===v)){alert('同じ名前のチームがもう登録されています')}else book[j].name=v;save(KEY_TEAMS,book.filter(x=>x.name));renderSetup();return}
   if(t.dataset.pick!=null){if(t.value!==''){cfg.teams[+t.dataset.pick]={...load(KEY_TEAMS,[])[+t.value]};save(KEY_LAST,cfg);renderSetup()}return}
   const el=t.closest('.num[data-k]');if(el){clampK(el.dataset.k,+t.value||0);save(KEY_LAST,cfg);renderSetup()}
 });
 $('#setup').addEventListener('input',e=>{
   const t=e.target;if(t.dataset.name==null)return;
   cfg.teams[+t.dataset.name].name=t.value;save(KEY_LAST,cfg);
-  t.parentElement.querySelector('.mini .nm').textContent=t.value||'チーム';renderFirstServe();
+  renderFirstServe();
 });
 
 // ---------- 試合 ----------
@@ -461,7 +477,7 @@ function startMatch(){
   cfg.teams.forEach((t,i)=>{if(!t.name.trim())t.name=i?'チームB':'チームA'});
   let saved=load(KEY_TEAMS,[]);
   cfg.teams.forEach(t=>{saved=saved.filter(s=>s.name!==t.name);saved.unshift({...t})});
-  save(KEY_TEAMS,saved.slice(0,20));save(KEY_LAST,cfg);
+  save(KEY_TEAMS,saved.filter(x=>x.name).slice(0,40));save(KEY_LAST,cfg);
   state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:Date.now(),setStart:Date.now()};
   hist=[];persist();show('board');
 }
