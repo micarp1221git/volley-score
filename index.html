@@ -104,7 +104,10 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .servemark.on{visibility:visible}
 
 .center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:10px;width:clamp(96px,16vw,150px)}
-.setlbl .gostart{display:block;margin:8px auto 0;padding:10px 14px;border-radius:6px;background:var(--yellow);color:var(--ink);font-family:var(--jp);font-weight:700;font-size:15px;letter-spacing:.06em;white-space:nowrap}
+.setlbl .gostart{display:flex;align-items:center;gap:8px;margin:8px auto 0;padding:9px 16px 9px 12px;border-radius:999px;background:#16171a;color:#fff;font-family:var(--jp);font-weight:700;font-size:15px;letter-spacing:.06em;white-space:nowrap;box-shadow:0 4px 10px #0003}
+.setlbl .gostart .rec{width:14px;height:14px;border-radius:50%;background:#e0322b;box-shadow:0 0 0 3px #e0322b55;animation:recp 1.6s ease-in-out infinite}
+@keyframes recp{50%{box-shadow:0 0 0 6px #e0322b22}}
+.setlbl .clock svg{width:.95em;height:.95em;vertical-align:-.12em;margin-right:3px}
 .setlbl .clock{display:block;font-size:.85em;letter-spacing:.08em;margin-top:2px;opacity:.85}
 .setlbl{font-family:var(--num);letter-spacing:.14em;font-size:clamp(14px,3vmin,20px);color:var(--sub);text-align:center;line-height:1.2}
 .setlbl b{display:block;color:var(--text);font-size:1.5em;font-weight:400}
@@ -557,7 +560,7 @@ function draw(changed){
     to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts)});
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
   const n=state.sets.length+1;
-  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点${state.started?`<span class="clock" id="clock">${dur(Date.now()-state.started)}</span>`:'<button class="gostart" data-act="go">試合開始</button>'}`;
+  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点${state.started?`<span class="clock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="14" r="8"/><path d="M12 14V10M10 2h4M12 2v4"/></svg><span id="clock">${dur(Date.now()-state.started)}</span></span>`:'<button class="gostart" data-act="go"><span class="rec"></span>試合開始</button>'}`;
   $$('.plate').forEach(pl=>{const ti=order[+pl.dataset.pos];pl.querySelector('.tn').textContent=c.teams[ti].name;
     pl.querySelector('.past').innerHTML=state.sets.map(x=>`<i class="${x.w===ti?'w':''}">${ti?x.b:x.a}</i>`).join('')});
   $('#sign').classList.toggle('off',state.done);
