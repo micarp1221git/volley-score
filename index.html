@@ -162,7 +162,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .side .band,.side .sets,.servemark,#arrow{display:none!important}
 .stage{min-height:0;padding:clamp(4px,1.5vmin,12px)}
 .fr{display:flex;padding:clamp(10px,2.6vmin,22px);border-radius:14px;background:linear-gradient(180deg,var(--c1,#888) 0 50%,var(--c2,#ccc) 50% 100%);box-shadow:0 0 0 1px #0000001a,0 8px 18px #0002;max-width:100%;max-height:100%}
-.side .flip{height:min(46vh,100%);width:min(62vh,38vw);font-size:min(44vh,26vw);box-shadow:0 1px 0 #fff inset,0 6px 14px #0003}
+.side .flip{height:min(46vh,100%);width:min(62vh,38vw);font-size:min(44vh,26vw);height:min(44svh,100%);width:min(60svh,38vw);font-size:min(42svh,26vw);box-shadow:0 1px 0 #fff inset,0 6px 14px #0003}
 .setlbl b{color:#141414}
 .setcards .flip{box-shadow:0 6px 14px #0003}
 .to{border-color:#d8d6cf;color:#141414}
@@ -184,7 +184,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   .center .setlbl b{display:inline;font-size:1.3em;margin-right:6px}
   .side[data-pos="0"]{grid-area:l}.side[data-pos="1"]{grid-area:r}
   .side{align-self:center}
-  .side .flip{width:calc(50vw - 46px)!important;height:min(26vh,calc(50vw - 30px))!important;font-size:min(24vh,38vw)!important}
+  .side .flip{width:calc(50vw - 46px)!important;height:min(26svh,calc(50vw - 30px))!important;font-size:min(24svh,38vw)!important}
   .pad{grid-area:pad;grid-row:auto;grid-template-rows:auto auto auto;gap:10px}
   /* 11/14 みかさん「得点のボタン大きすぎる・ほかのボタンも押しやすく」: +1 は高さを決めて、空いた分は上へ。タイムと道具を大きく */
   .pad .hit{height:clamp(150px,27vh,250px)}
@@ -579,7 +579,7 @@ function showMid(){
 }
 function showResult(){
   const c=state.cfg,won=wonSets(),w=won[0]>won[1]?0:1;
-  ov(`<h3>${esc(c.teams[w].name)} の勝ち</h3>
+  ov(`<h3>${won[0]===won[1]?'引き分け':esc(c.teams[w].name)+' の勝ち'}</h3>
     <div class="big">${won[0]} - ${won[1]}</div>
     <div class="sm">${state.sets.map((s,i)=>`第${i+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}<br>試合時間 ${durJ((state.ended||Date.now())-state.started)}</div>
     <div class="btns"><button class="sec" data-a="undo">戻す</button><button class="cta" data-a="saveOnly">保存する</button></div>`);
@@ -646,6 +646,7 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='bc'){const[j,k,c]=b.dataset.v.split(':');const book=load(KEY_TEAMS,[]);if(book[+j]){book[+j][k]=c;if(!book[+j].c2)book[+j].c2=book[+j].c1;save(KEY_TEAMS,book);showBookColor(+j);renderSetup()}}
   else if(a==='close'){hideOv();state&&$('#board').classList.contains('on')&&draw()}
   else if(a==='edit'){showEdit()}
+  else if(a==='finishNow'){hideOv();if(!confirm('いまの点で試合を終えて、結果を残しますか？'))return draw();snap();const sc=state.score;if(sc[0]||sc[1])state.sets.push({a:sc[0],b:sc[1],w:sc[0]===sc[1]?null:(sc[0]>sc[1]?0:1),t:Date.now()-(state.setStart||state.started)});state.score=[0,0];state.setEnded=null;state.midAsk=false;state.done=true;state.ended=Date.now();persist();draw()}
   else if(a==='end'){hideOv();if(confirm('この試合をやめて、設定の画面にもどりますか？（途中までの点は残りません）')){state.done=true;persist();finish()}else draw()}
   else if(a==='help'){hideOv();show('help')}
   else if(a==='midSwap'){snap();state.leftTeam=1-state.leftTeam;state.midAsk=false;state.midDone=true;persist();draw()}
@@ -735,7 +736,8 @@ const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="rules">今進んでいる試合の設定をかえる</button>
   <button class="sec" data-a="help">使い方とルール</button>
   <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
-  <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる</button>`);
+  <button class="cta" data-a="finishNow">ここで試合を終える（結果を残す）</button>
+  <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる（結果を残さない）</button>`);
 $('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
 
 // 試合中は画面を消さない（11/14 みかさん）。ブラウザの Wake Lock を使う。アプリに切り替えたら戻ってきたときに取り直す
