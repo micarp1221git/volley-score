@@ -97,6 +97,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .servemark.on{visibility:visible}
 
 .center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:10px;width:clamp(96px,16vw,150px)}
+.setlbl .clock{display:block;font-size:.85em;letter-spacing:.08em;margin-top:2px;opacity:.85}
 .setlbl{font-family:var(--num);letter-spacing:.14em;font-size:clamp(14px,3vmin,20px);color:var(--sub);text-align:center;line-height:1.2}
 .setlbl b{display:block;color:var(--text);font-size:1.5em;font-weight:400}
 .setcards{display:flex;gap:4px}
@@ -461,12 +462,16 @@ function startMatch(){
   let saved=load(KEY_TEAMS,[]);
   cfg.teams.forEach(t=>{saved=saved.filter(s=>s.name!==t.name);saved.unshift({...t})});
   save(KEY_TEAMS,saved.slice(0,20));save(KEY_LAST,cfg);
-  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:Date.now()};
+  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:Date.now(),setStart:Date.now()};
   hist=[];persist();show('board');
 }
 function persist(){save(KEY,state);save(KEY+'.hist',hist.slice(-300))}
 const isFinalSet=()=>{const c=state.cfg;return c.setsToWin>1&&state.sets.length===c.setsToWin*2-2};
 const setTarget=()=>isFinalSet()?state.cfg.finalPoints:state.cfg.points;
+// 試合の時間（11/15 みかさん「試合スタートと試合終了のボタンで時間を計れたり」）。「試合をはじめる」から「試合を終える」まで
+const dur=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
+const durJ=ms=>{const m=Math.max(1,Math.round(ms/60000));return m>=60?`${Math.floor(m/60)}時間${m%60}分`:`${m}分`};
+setInterval(()=>{const el=$('#clock');if(el&&state&&!state.done)el.textContent=dur(Date.now()-state.started)},1000);
 const wonSets=()=>[0,1].map(i=>state.sets.filter(s=>s.w===i).length);
 function setWinner(){
   const t=setTarget(),c=state.cfg;
@@ -479,14 +484,14 @@ function snap(){hist.push(JSON.stringify(state))}
 function point(team){
   if(state.setEnded!=null||state.done)return;
   snap();state.score[team]++;state.serve=team;vib();
-  const w=setWinner();if(w!=null)state.setEnded=w;
+  const w=setWinner();if(w!=null){state.setEnded=w;state.setEndAt=Date.now()}
   else if(isFinalSet()&&!state.midDone&&Math.max(...state.score)===Math.ceil(setTarget()/2))state.midAsk=true;
   persist();draw(team);
 }
 function undo(){if(!hist.length)return;state=JSON.parse(hist.pop());vib();persist();draw()}
 function nextSet(){
   snap();
-  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w});
+  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w,t:(state.setEndAt||Date.now())-(state.setStart||state.started)});state.setStart=Date.now();state.setEndAt=null;
   if(wonSets()[w]>=state.cfg.setsToWin){state.done=true;state.ended=Date.now();persist();draw();return}
   state.score=[0,0];state.to=[0,0];state.setEnded=null;state.midAsk=false;state.midDone=false;
   if(state.cfg.swapSets!==false)state.leftTeam=1-state.leftTeam; // セットごとにコートを入れ替える
@@ -513,7 +518,7 @@ function draw(changed){
     to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts)});
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
   const n=state.sets.length+1;
-  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点`;
+  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点<span class="clock" id="clock">${dur(Date.now()-state.started)}</span>`;
   $$('.plate').forEach(pl=>{const ti=order[+pl.dataset.pos];pl.querySelector('.tn').textContent=c.teams[ti].name;
     pl.querySelector('.past').innerHTML=state.sets.map(x=>`<i class="${x.w===ti?'w':''}">${ti?x.b:x.a}</i>`).join('')});
   $('#sign').classList.toggle('off',state.done);
@@ -531,7 +536,7 @@ function showSetEnd(){
   const c=state.cfg,w=state.setEnded,n=state.sets.length+1,won=wonSets();won[w]++;
   ov(`<h3>第${n}セット　${esc(c.teams[w].name)}</h3>
     <div class="big">${state.score[0]} - ${state.score[1]}</div>
-    <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}</div>
+    <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}<br>このセットの時間 ${durJ((state.setEndAt||Date.now())-(state.setStart||state.started))}</div>
     <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div>`);
 }
 function showMid(){
@@ -546,7 +551,7 @@ function showResult(){
   const c=state.cfg,won=wonSets(),w=won[0]>won[1]?0:1;
   ov(`<h3>${esc(c.teams[w].name)} の勝ち</h3>
     <div class="big">${won[0]} - ${won[1]}</div>
-    <div class="sm">${state.sets.map((s,i)=>`第${i+1}セット　${s.a} - ${s.b}`).join('<br>')}</div>
+    <div class="sm">${state.sets.map((s,i)=>`第${i+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}<br>試合時間 ${durJ((state.ended||Date.now())-state.started)}</div>
     <div class="btns"><button class="sec" data-a="undo">戻す</button><button class="cta" data-a="saveOnly">保存する</button></div>`);
 }
 // 点数を直す：打ちこんだ数字で、いまのセットとこれまでのセットを直す
@@ -620,7 +625,7 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='del'){if(!confirm('この結果を消しますか？'))return;const rs=load(KEY_RES,[]);rs.splice(+b.dataset.i,1);save(KEY_RES,rs);hideOv();renderResults()}
 });
 function saveResult(){
-  const c=state.cfg,r={date:state.ended||Date.now(),teams:c.teams,sets:state.sets,won:wonSets()};
+  const c=state.cfg,r={date:state.ended||Date.now(),teams:c.teams,sets:state.sets,won:wonSets(),dur:(state.ended||Date.now())-state.started};
   const rs=load(KEY_RES,[]);rs.unshift(r);save(KEY_RES,rs.slice(0,200));return r;
 }
 function finish(){hideOv();state=null;try{localStorage.removeItem(KEY);localStorage.removeItem(KEY+'.hist')}catch(e){}hist=[];renderSetup();show('setup')}
@@ -664,21 +669,21 @@ async function shareImage(r){
 const hm=d=>`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
 function renderResults(){
   const rs=load(KEY_RES,[]);
-  $('#resList').innerHTML=rs.length?rs.map((r,i)=>{const d=new Date(r.date);return `<div class="res"><div style="min-width:0"><div class="d">${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}　${hm(d)}</div><div class="t"><span class="pill" style="background:${r.teams[0].c1}"></span>${esc(r.teams[0].name)}　<span style="font-family:var(--num);font-size:22px;letter-spacing:.06em">${r.won[0]} - ${r.won[1]}</span>　${esc(r.teams[1].name)}<span class="pill" style="background:${r.teams[1].c1};margin:0 0 0 6px"></span></div><div class="s">${r.sets.map(s=>`${s.a}-${s.b}`).join('  /  ')}</div></div><button class="open" data-r="${i}">開く</button></div>`}).join(''):'<p class="note" style="margin:0">まだ保存した試合はありません</p>';
+  $('#resList').innerHTML=rs.length?rs.map((r,i)=>{const d=new Date(r.date);return `<div class="res"><div style="min-width:0"><div class="d">${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}　${hm(d)}</div><div class="t"><span class="pill" style="background:${r.teams[0].c1}"></span>${esc(r.teams[0].name)}　<span style="font-family:var(--num);font-size:22px;letter-spacing:.06em">${r.won[0]} - ${r.won[1]}</span>　${esc(r.teams[1].name)}<span class="pill" style="background:${r.teams[1].c1};margin:0 0 0 6px"></span></div><div class="s">${r.sets.map(s=>`${s.a}-${s.b}`).join('  /  ')}${r.dur?`　（${durJ(r.dur)}）`:''}</div></div><button class="open" data-r="${i}">開く</button></div>`}).join(''):'<p class="note" style="margin:0">まだ保存した試合はありません</p>';
 }
 $('#resList').addEventListener('click',e=>{
   const b=e.target.closest('button[data-r]');if(!b)return;openResult(+b.dataset.r);
 });
 function openResult(i){
   const r=load(KEY_RES,[])[i];if(!r)return;const d=new Date(r.date);
-  ov(`<div class="sm">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日　${hm(d)}</div><h3>${esc(r.teams[0].name)}　vs　${esc(r.teams[1].name)}</h3><div class="big">${r.won[0]} - ${r.won[1]}</div><div class="sm">${r.sets.map((s,k)=>`第${k+1}セット　${s.a} - ${s.b}`).join('<br>')}</div>
+  ov(`<div class="sm">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日　${hm(d)}</div><h3>${esc(r.teams[0].name)}　vs　${esc(r.teams[1].name)}</h3><div class="big">${r.won[0]} - ${r.won[1]}</div><div class="sm">${r.sets.map((s,k)=>`第${k+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}${r.dur?`<br>試合時間 ${durJ(r.dur)}`:''}</div>
   <div class="sm" style="margin-top:12px">送り先（LINE・BAND・写真など）は、次の画面で選べます</div>
   <div class="btns"><button class="cta" data-a="share" data-i="${i}">画像で送る</button><button class="cta" data-a="shareText" data-i="${i}" style="background:var(--card)">文字で送る</button></div>
   <div class="btns"><button class="sec" data-a="del" data-i="${i}">消す</button><button class="sec" data-a="close">閉じる</button></div>`);
 }
 function resultText(r){
   const d=new Date(r.date);
-  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}\n${r.teams[0].name} ${r.won[0]} - ${r.won[1]} ${r.teams[1].name}\n`+r.sets.map((s,k)=>`第${k+1}セット ${s.a}-${s.b}`).join('\n');
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}\n${r.teams[0].name} ${r.won[0]} - ${r.won[1]} ${r.teams[1].name}\n`+r.sets.map((s,k)=>`第${k+1}セット ${s.a}-${s.b}`).join('\n')+(r.dur?`\n試合時間 ${durJ(r.dur)}`:'');
 }
 async function shareText(r){
   const text=resultText(r);
