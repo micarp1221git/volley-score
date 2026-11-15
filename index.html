@@ -282,6 +282,7 @@ html[data-theme=dark] #board .chalk{border-bottom-color:#0d1f18}
     <div class="seg" style="grid-template-columns:1fr 1fr" id="theme"><button data-th="light">明るい</button><button data-th="dark">暗い</button></div>
   </div>
 
+  <button class="cta" id="resume2" style="display:none">試合にもどる</button>
   <button class="cta" id="start">試合をはじめる</button>
   <button class="sec" id="toResults">これまでの結果</button>
   <p class="foot">データはこの端末の中だけに保存されます</p>
@@ -431,7 +432,8 @@ function renderSetup(){
   });
   renderFirstServe();renderBook();
   const st=load(KEY,null);
-  $('#resumeBox').innerHTML=st&&!st.done?`<div class="panel" style="border-color:var(--yellow)"><h2 style="color:var(--yellow)">途中の試合があります</h2><div style="font-size:15px;margin-bottom:12px">${esc(st.cfg.teams[0].name)} <span style="font-family:var(--num);font-size:22px;letter-spacing:.06em">${st.score[0]} - ${st.score[1]}</span> ${esc(st.cfg.teams[1].name)}<span class="note" style="margin-left:8px">第${st.sets.length+1}セット</span></div><button class="cta" id="resume" style="margin-top:0">続きから</button></div>`:'';
+  {const live=st&&!st.done;$('#resume2').style.display=live?'':'none';$('#start').textContent=live?'新しい試合をはじめる':'試合をはじめる';$('#start').className=live?'sec':'cta'}
+  $('#resumeBox').innerHTML=st&&!st.done?`<div class="panel" style="border-color:var(--yellow)"><h2 style="color:var(--yellow)">試合中です</h2><p class="note" style="margin:0 0 10px">ここで変えた点数・チーム名・色は「試合にもどる」で今の試合に入ります（いまの点はそのまま）</p><div style="font-size:15px;margin-bottom:12px">${esc(st.cfg.teams[0].name)} <span style="font-family:var(--num);font-size:22px;letter-spacing:.06em">${st.score[0]} - ${st.score[1]}</span> ${esc(st.cfg.teams[1].name)}<span class="note" style="margin-left:8px">第${st.sets.length+1}セット</span></div><button class="cta" id="resume" style="margin-top:0">試合にもどる</button></div>`:'';
 }
 // チームの登録（11/15 みかさん「大会のときとか先に複数入力しておきたいから、チーム名入力箇所作って」）。試合で使ったチームと同じ一覧に入る
 function renderBook(){
@@ -464,7 +466,11 @@ $('#setup').addEventListener('click',e=>{
   else if(b.dataset.c){const[i,k,c]=b.dataset.c.split(':');cfg.teams[+i][k]=c}
   else if(b.dataset.fs){cfg.firstServe=+b.dataset.fs}
   else if(b.id==='start'){startMatch();return}
-  else if(b.id==='resume'){state=load(KEY,null);show('board');return}
+  else if(b.id==='resume'||b.id==='resume2'){state=load(KEY,null);if(state&&!state.done){
+      const won=wonSets();if(Math.max(...won)>=cfg.setsToWin){alert('もう'+cfg.setsToWin+'セット取ったチームがいます。「何セット先取」を、いまより大きい数にしてください。');return}
+      const keep=state.cfg;snap();state.cfg={...JSON.parse(JSON.stringify(cfg)),firstServe:keep.firstServe};
+      state.setEnded=setWinner();if(state.setEnded==null)state.midAsk=false;persist()}
+    show('board');draw();return}
   else if(b.id==='toResults'){renderResults();show('results');return}
   else if(b.id==='bookAdd'){const book=load(KEY_TEAMS,[]).filter(t=>t.name);const c1=COLORS[(book.length*4)%COLORS.length];book.push({name:'',c1,c2:'#f6f5f0'});save(KEY_TEAMS,book.slice(-40));renderSetup();const ins=$$('[data-book]');ins[ins.length-1].focus();return}
   else if(b.dataset.bmv!=null){const[j,d]=b.dataset.bmv.split(':').map(Number),book=load(KEY_TEAMS,[]),k=j+d;if(k<0||k>=book.length)return;[book[j],book[k]]=[book[k],book[j]];save(KEY_TEAMS,book);renderSetup();return}
@@ -488,6 +494,7 @@ $('#setup').addEventListener('input',e=>{
 // ---------- 試合 ----------
 let state=null,hist=[];
 function startMatch(){
+  {const cur=load(KEY,null);if(cur&&!cur.done&&!confirm('いまの試合を終わりにして、新しい試合をはじめますか？（いまの試合の点は残りません）'))return}
   cfg.teams.forEach((t,i)=>{if(!t.name.trim())t.name=i?'チームB':'チームA'});
   let saved=load(KEY_TEAMS,[]);
   cfg.teams.forEach(t=>{const k=saved.findIndex(s=>s.name===t.name);if(k>=0)saved[k]={...t};else saved.push({...t})});
@@ -651,7 +658,7 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='help'){hideOv();show('help')}
   else if(a==='midSwap'){snap();state.leftTeam=1-state.leftTeam;state.midAsk=false;state.midDone=true;persist();draw()}
   else if(a==='midKeep'){state.midAsk=false;state.midDone=true;persist();draw()}
-  else if(a==='toSetup'){hideOv();renderSetup();show('setup')}
+  else if(a==='toSetup'){hideOv();if(state&&!state.done){const f=cfg.format;cfg=JSON.parse(JSON.stringify(state.cfg));cfg.format=cfg.format||f}renderSetup();show('setup');scrollTo(0,0)}
   else if(a==='share'){await shareImage(load(KEY_RES,[])[+b.dataset.i])}
   else if(a==='shareText'){await shareText(load(KEY_RES,[])[+b.dataset.i])}
   else if(a==='reOpen'){const r=load(KEY_RES,[])[+b.dataset.i];redit={i:+b.dataset.i,sets:r.sets.map(x=>({...x}))};showResultEdit()}
@@ -761,9 +768,8 @@ const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw
 const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
   <button class="sec" data-a="edit">点数を直す</button>
-  <button class="sec" data-a="rules">今進んでいる試合の設定をかえる</button>
   <button class="sec" data-a="help">使い方とルール</button>
-  <button class="sec" data-a="toSetup">設定の画面を見る（試合は残ります）</button>
+  <button class="sec" data-a="toSetup">設定をかえる（点数・チーム・色）</button>
   <button class="cta" data-a="finishNow">ここで試合を終える（結果を残す）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる（結果を残さない）</button>`);
 $('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
