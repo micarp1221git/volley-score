@@ -654,6 +654,12 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='toSetup'){hideOv();renderSetup();show('setup')}
   else if(a==='share'){await shareImage(load(KEY_RES,[])[+b.dataset.i])}
   else if(a==='shareText'){await shareText(load(KEY_RES,[])[+b.dataset.i])}
+  else if(a==='reOpen'){const r=load(KEY_RES,[])[+b.dataset.i];redit={i:+b.dataset.i,sets:r.sets.map(x=>({...x}))};showResultEdit()}
+  else if(a==='reAdd'){reSync();redit.sets.push({a:0,b:0});showResultEdit()}
+  else if(a==='reDel'){reSync();redit.sets.splice(+b.dataset.k,1);showResultEdit()}
+  else if(a==='reMv'){reSync();const[k,d]=b.dataset.k.split(':').map(Number),j=k+d;[redit.sets[k],redit.sets[j]]=[redit.sets[j],redit.sets[k]];showResultEdit()}
+  else if(a==='reSave'){reSave()}
+  else if(a==='reCancel'){const i=redit.i;redit=null;openResult(i)}
   else if(a==='del'){if(!confirm('この結果を消しますか？'))return;const rs=load(KEY_RES,[]);rs.splice(+b.dataset.i,1);save(KEY_RES,rs);hideOv();renderResults()}
 });
 function saveResult(){
@@ -711,7 +717,29 @@ function openResult(i){
   ov(`<div class="sm">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日　${hm(d)}</div><h3>${esc(r.teams[0].name)}　vs　${esc(r.teams[1].name)}</h3><div class="big">${r.won[0]} - ${r.won[1]}</div><div class="sm">${r.sets.map((s,k)=>`第${k+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}${r.dur?`<br>試合時間 ${durJ(r.dur)}`:''}</div>
   <div class="sm" style="margin-top:12px">送り先（LINE・BAND・写真など）は、次の画面で選べます</div>
   <div class="btns"><button class="cta" data-a="share" data-i="${i}">画像で送る</button><button class="cta" data-a="shareText" data-i="${i}" style="background:var(--card)">文字で送る</button></div>
-  <div class="btns"><button class="sec" data-a="del" data-i="${i}">消す</button><button class="sec" data-a="close">閉じる</button></div>`);
+  <div class="btns"><button class="sec" data-a="reOpen" data-i="${i}">結果を直す</button><button class="sec" data-a="del" data-i="${i}">消す</button></div>
+  <button class="sec" data-a="close">閉じる</button>`);
+}
+// 試合が終わったあとで結果を直す（11/15 みかさん「1セット目が消えちゃってるので追加したりしたい」）。セットを足す・消す・並べ替える・点を直す
+let redit=null;
+function reSync(){if(!redit)return;$$('[data-re]').forEach(el=>{const[k,f]=el.dataset.re.split(':');redit.sets[+k][f]=Math.max(0,Math.min(99,parseInt(el.value,10)||0))})}
+function showResultEdit(){
+  const r=load(KEY_RES,[])[redit.i],n=r.teams;
+  ov(`<h3>結果を直す</h3><div class="sm">数字を打ちこんで「直す」を押してください。抜けたセットは「＋ セットを足す」で足して、▲▼で順番を合わせます</div>
+    <div style="text-align:left;margin-top:12px">${redit.sets.map((x,k)=>`<div class="bookrow"><span style="width:30px;flex:none;font-size:13px">${k+1}</span>
+      <input type="number" inputmode="numeric" min="0" max="99" value="${x.a}" data-re="${k}:a" aria-label="${esc(n[0].name)}" style="width:58px;flex:none;text-align:center"><span>-</span>
+      <input type="number" inputmode="numeric" min="0" max="99" value="${x.b}" data-re="${k}:b" aria-label="${esc(n[1].name)}" style="width:58px;flex:none;text-align:center">
+      <span class="mv"><button data-a="reMv" data-k="${k}:-1" ${k?'':'disabled'}>▲</button><button data-a="reMv" data-k="${k}:1" ${k<redit.sets.length-1?'':'disabled'}>▼</button></span>
+      <button class="open" data-a="reDel" data-k="${k}">消す</button></div>`).join('')}</div>
+    <div class="sm" style="margin-top:6px">左の数字＝${esc(n[0].name)}　右の数字＝${esc(n[1].name)}</div>
+    <button class="sec" data-a="reAdd">＋ セットを足す</button>
+    <div class="btns"><button class="sec" data-a="reCancel">やめる</button><button class="cta" data-a="reSave">直す</button></div>`);
+}
+function reSave(){
+  reSync();const rs=load(KEY_RES,[]),r=rs[redit.i];
+  if(redit.sets.some(x=>x.a===x.b)){alert('同点のセットがあります。どちらかが多くなるように直してください。');return}
+  r.sets=redit.sets.map(x=>({...x,w:x.a>x.b?0:1}));r.won=[0,1].map(t=>r.sets.filter(x=>x.w===t).length);
+  save(KEY_RES,rs);const i=redit.i;redit=null;renderResults();openResult(i);
 }
 function resultText(r){
   const d=new Date(r.date);
