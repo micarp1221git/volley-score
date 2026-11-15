@@ -48,7 +48,12 @@ h2{font-size:12px;color:var(--sub);font-weight:400;letter-spacing:.12em;margin:0
 .toggle.on::after{left:25px;background:var(--ink)}
 .teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:600px){.teams{grid-template-columns:1fr}}
-.team input[type=text]{width:100%;height:46px;border-radius:4px;border:1px solid #33373e;background:#101114;color:var(--text);padding:0 12px;font-size:17px}
+.team input[type=text]{width:100%;height:46px;border-radius:4px;border:1px solid #33373e;background:#101114;color:var(--text);padding:0 44px 0 12px;font-size:17px}
+.namebox{position:relative;display:block;margin-top:6px}
+.namebox .pen{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--sub);pointer-events:none}
+.namebox input:focus{border-color:var(--yellow);outline:none}
+.namebox input:focus+.pen{color:var(--yellow)}
+.lbl .hint{color:var(--text);font-weight:700;letter-spacing:.04em;margin-left:6px}
 .swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
 .sw{aspect-ratio:1;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff26;position:relative}
 .sw.on::after{content:"";position:absolute;inset:-4px;border:2px solid var(--yellow);border-radius:6px}
@@ -408,8 +413,9 @@ function renderSetup(){
   $$('.team').forEach(el=>{
     const i=+el.dataset.t,t=cfg.teams[i];
     el.innerHTML=`<h2>チーム ${i?'B':'A'}</h2>
-      ${saved.length?`<select data-pick="${i}"><option value="">保存したチームから選ぶ</option>${saved.map((s,j)=>`<option value="${j}">${esc(s.name)}</option>`).join('')}</select>`:''}
-      <input type="text" maxlength="16" value="${esc(t.name)}" data-name="${i}" placeholder="チーム名">
+      <div class="lbl" style="margin-top:4px">チーム名<span class="hint">タップして書きかえ</span></div>
+      <label class="namebox"><input type="text" maxlength="16" value="${esc(t.name)}" data-name="${i}" placeholder="チーム名を入力"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></label>
+      ${saved.length?`<div class="lbl">前に対戦したチーム</div><select data-pick="${i}" style="margin-top:6px"><option value="">前に対戦したチームから選ぶ</option>${saved.map((s,j)=>`<option value="${j}">${esc(s.name)}</option>`).join('')}</select>`:''}
       <div class="lbl">チームの色（1色目・カードの枠の上半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c1===c?'on':''}" style="background:${c}" data-c="${i}:c1:${c}" aria-label="色"></button>`).join('')}</div>
       <div class="lbl">2色目（カードの枠の下半分）</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${t.c2===c?'on':''}" style="background:${c}" data-c="${i}:c2:${c}" aria-label="色"></button>`).join('')}</div>
       <div class="mini"><div class="fr" style="--c1:${t.c1};--c2:${t.c2};padding:12px;border-radius:12px"><div class="flip" style="width:120px;height:100px;font-size:92px"><div class="rings"><i></i><i></i></div><span class="v">12</span></div></div></div>`;
