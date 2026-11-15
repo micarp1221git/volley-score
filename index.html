@@ -104,6 +104,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .servemark.on{visibility:visible}
 
 .center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:10px;width:clamp(96px,16vw,150px)}
+.setlbl .gostart{display:block;margin:8px auto 0;padding:10px 14px;border-radius:6px;background:var(--yellow);color:var(--ink);font-family:var(--jp);font-weight:700;font-size:15px;letter-spacing:.06em;white-space:nowrap}
 .setlbl .clock{display:block;font-size:.85em;letter-spacing:.08em;margin-top:2px;opacity:.85}
 .setlbl{font-family:var(--num);letter-spacing:.14em;font-size:clamp(14px,3vmin,20px);color:var(--sub);text-align:center;line-height:1.2}
 .setlbl b{display:block;color:var(--text);font-size:1.5em;font-weight:400}
@@ -499,7 +500,7 @@ function startMatch(){
   let saved=load(KEY_TEAMS,[]);
   cfg.teams.forEach(t=>{const k=saved.findIndex(s=>s.name===t.name);if(k>=0)saved[k]={...t};else saved.push({...t})});
   save(KEY_TEAMS,saved.filter(x=>x.name).slice(-60));save(KEY_LAST,cfg);
-  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:Date.now(),setStart:Date.now()};
+  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:null,setStart:null};
   hist=[];persist();show('board');
 }
 function persist(){save(KEY,state);save(KEY+'.hist',hist.slice(-300))}
@@ -507,8 +508,9 @@ const isFinalSet=()=>{const c=state.cfg;return c.setsToWin>1&&state.sets.length=
 const setTarget=()=>isFinalSet()?state.cfg.finalPoints:state.cfg.points;
 // 試合の時間（11/15 みかさん「試合スタートと試合終了のボタンで時間を計れたり」）。「試合をはじめる」から「試合を終える」まで
 const dur=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
+const since=t=>t?Date.now()-t:0;
 const durJ=ms=>{const m=Math.max(1,Math.round(ms/60000));return m>=60?`${Math.floor(m/60)}時間${m%60}分`:`${m}分`};
-setInterval(()=>{const el=$('#clock');if(el&&state&&!state.done)el.textContent=dur(Date.now()-state.started)},1000);
+setInterval(()=>{const el=$('#clock');if(el&&state&&!state.done&&state.started)el.textContent=dur(Date.now()-state.started)},1000);
 const wonSets=()=>[0,1].map(i=>state.sets.filter(s=>s.w===i).length);
 function setWinner(){
   const t=setTarget(),c=state.cfg;
@@ -520,7 +522,7 @@ function setWinner(){
 function snap(){hist.push(JSON.stringify(state))}
 function point(team){
   if(state.setEnded!=null||state.done)return;
-  snap();state.score[team]++;state.serve=team;vib();
+  snap();if(!state.started)state.started=state.setStart=Date.now();state.score[team]++;state.serve=team;vib();
   const w=setWinner();if(w!=null){state.setEnded=w;state.setEndAt=Date.now()}
   else if(isFinalSet()&&!state.midDone&&Math.max(...state.score)===Math.ceil(setTarget()/2))state.midAsk=true;
   persist();draw(team);
@@ -528,7 +530,7 @@ function point(team){
 function undo(){if(!hist.length)return;state=JSON.parse(hist.pop());vib();persist();draw()}
 function nextSet(){
   snap();
-  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w,t:(state.setEndAt||Date.now())-(state.setStart||state.started)});state.setStart=Date.now();state.setEndAt=null;
+  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w,t:state.setStart?(state.setEndAt||Date.now())-state.setStart:0});state.setStart=Date.now();state.setEndAt=null;
   if(wonSets()[w]>=state.cfg.setsToWin){state.done=true;state.ended=Date.now();persist();draw();return}
   state.score=[0,0];state.to=[0,0];state.setEnded=null;state.midAsk=false;state.midDone=false;
   if(state.cfg.swapSets!==false)state.leftTeam=1-state.leftTeam; // セットごとにコートを入れ替える
@@ -555,7 +557,7 @@ function draw(changed){
     to.innerHTML=`<span class="jp">タイム</span>${state.to[ti]}/${c.timeouts}`;to.classList.toggle('full',state.to[ti]>=c.timeouts)});
   setFlip($('#sc0'),won[order[0]]);setFlip($('#sc1'),won[order[1]]);
   const n=state.sets.length+1;
-  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点<span class="clock" id="clock">${dur(Date.now()-state.started)}</span>`;
+  $('#setlbl').innerHTML=state.done?'<b>FINAL</b>試合終了':`<b>SET ${n}</b>${isFinalSet()?'最終・':''}${setTarget()}点${state.started?`<span class="clock" id="clock">${dur(Date.now()-state.started)}</span>`:'<button class="gostart" data-act="go">試合開始</button>'}`;
   $$('.plate').forEach(pl=>{const ti=order[+pl.dataset.pos];pl.querySelector('.tn').textContent=c.teams[ti].name;
     pl.querySelector('.past').innerHTML=state.sets.map(x=>`<i class="${x.w===ti?'w':''}">${ti?x.b:x.a}</i>`).join('')});
   $('#sign').classList.toggle('off',state.done);
@@ -573,7 +575,7 @@ function showSetEnd(){
   const c=state.cfg,w=state.setEnded,n=state.sets.length+1,won=wonSets();won[w]++;
   ov(`<h3>第${n}セット　${esc(c.teams[w].name)}</h3>
     <div class="big">${state.score[0]} - ${state.score[1]}</div>
-    <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}<br>このセットの時間 ${durJ((state.setEndAt||Date.now())-(state.setStart||state.started))}</div>
+    <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}${state.setStart?`<br>このセットの時間 ${durJ((state.setEndAt||Date.now())-state.setStart)}`:''}</div>
     <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div>`);
 }
 function showMid(){
@@ -588,7 +590,7 @@ function showResult(){
   const c=state.cfg,won=wonSets(),w=won[0]>won[1]?0:1;
   ov(`<h3>${won[0]===won[1]?'引き分け':esc(c.teams[w].name)+' の勝ち'}</h3>
     <div class="big">${won[0]} - ${won[1]}</div>
-    <div class="sm">${state.sets.map((s,i)=>`第${i+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}<br>試合時間 ${durJ((state.ended||Date.now())-state.started)}</div>
+    <div class="sm">${state.sets.map((s,i)=>`第${i+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}${state.started?`<br>試合時間 ${durJ((state.ended||Date.now())-state.started)}`:''}</div>
     <div class="btns"><button class="sec" data-a="undo">戻す</button><button class="cta" data-a="saveOnly">保存する</button></div>`);
 }
 // 点数を直す：打ちこんだ数字で、いまのセットとこれまでのセットを直す
@@ -653,7 +655,7 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='bc'){const[j,k,c]=b.dataset.v.split(':');const book=load(KEY_TEAMS,[]);if(book[+j]){book[+j][k]=c;if(!book[+j].c2)book[+j].c2=book[+j].c1;save(KEY_TEAMS,book);showBookColor(+j);renderSetup()}}
   else if(a==='close'){hideOv();state&&$('#board').classList.contains('on')&&draw()}
   else if(a==='edit'){showEdit()}
-  else if(a==='finishNow'){hideOv();if(!confirm('いまの点で試合を終えて、結果を残しますか？'))return draw();snap();const sc=state.score;if(sc[0]||sc[1])state.sets.push({a:sc[0],b:sc[1],w:sc[0]===sc[1]?null:(sc[0]>sc[1]?0:1),t:Date.now()-(state.setStart||state.started)});state.score=[0,0];state.setEnded=null;state.midAsk=false;state.done=true;state.ended=Date.now();persist();draw()}
+  else if(a==='finishNow'){hideOv();if(!confirm('いまの点で試合を終えて、結果を残しますか？'))return draw();snap();const sc=state.score;if(sc[0]||sc[1])state.sets.push({a:sc[0],b:sc[1],w:sc[0]===sc[1]?null:(sc[0]>sc[1]?0:1),t:since(state.setStart)});state.score=[0,0];state.setEnded=null;state.midAsk=false;state.done=true;state.ended=Date.now();persist();draw()}
   else if(a==='end'){hideOv();if(confirm('この試合をやめて、設定の画面にもどりますか？（途中までの点は残りません）')){state.done=true;persist();finish()}else draw()}
   else if(a==='help'){hideOv();show('help')}
   else if(a==='midSwap'){snap();state.leftTeam=1-state.leftTeam;state.midAsk=false;state.midDone=true;persist();draw()}
@@ -670,7 +672,7 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='del'){if(!confirm('この結果を消しますか？'))return;const rs=load(KEY_RES,[]);rs.splice(+b.dataset.i,1);save(KEY_RES,rs);hideOv();renderResults()}
 });
 function saveResult(){
-  const c=state.cfg,r={date:state.ended||Date.now(),teams:c.teams,sets:state.sets,won:wonSets(),dur:(state.ended||Date.now())-state.started};
+  const c=state.cfg,r={date:state.ended||Date.now(),teams:c.teams,sets:state.sets,won:wonSets(),dur:state.started?(state.ended||Date.now())-state.started:0};
   const rs=load(KEY_RES,[]);rs.unshift(r);save(KEY_RES,rs.slice(0,200));return r;
 }
 function finish(){hideOv();state=null;try{localStorage.removeItem(KEY);localStorage.removeItem(KEY+'.hist')}catch(e){}hist=[];renderSetup();show('setup')}
@@ -772,7 +774,7 @@ const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="toSetup">設定をかえる（点数・チーム・色）</button>
   <button class="cta" data-a="finishNow">ここで試合を終える（結果を残す）</button>
   <button class="sec" data-a="end" style="color:var(--red)">この試合をやめる（結果を残さない）</button>`);
-$('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu})[b.dataset.act]()});
+$('#board').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;({undo,edit:showEdit,swap:swapCourt,menu:openMenu,go:()=>{if(state.started)return;snap();state.started=state.setStart=Date.now();vib();persist();draw()}})[b.dataset.act]()});
 
 // 試合中は画面を消さない（11/14 みかさん）。ブラウザの Wake Lock を使う。アプリに切り替えたら戻ってきたときに取り直す
 const KEY_AWAKE='vb.awake';let lock=null;
