@@ -54,6 +54,9 @@ h2{font-size:12px;color:var(--sub);font-weight:400;letter-spacing:.12em;margin:0
 .namebox input:focus{border-color:var(--yellow);outline:none}
 .namebox input:focus+.pen{color:var(--yellow)}
 .bookrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.bookrow .mv{display:flex;flex-direction:column;gap:2px;flex:none}
+.bookrow .mv button{width:36px;height:21px;border:1px solid var(--line);border-radius:3px;font-size:10px;line-height:1;color:var(--sub)}
+.bookrow .mv button:disabled{opacity:.25}
 .bookrow .chip{width:44px;height:44px;border-radius:6px;flex:none;background:linear-gradient(var(--c1) 50%,var(--c2) 50%);box-shadow:inset 0 0 0 1px #0002}
 .bookrow input{flex:1;min-width:0;height:44px;border-radius:4px;border:1px solid #33373e;background:#101114;color:var(--text);padding:0 12px;font-size:16px}
 html[data-theme=light] .bookrow input{background:#fff;border-color:#dcdad3;color:#16171a}
@@ -434,7 +437,7 @@ function renderSetup(){
 function renderBook(){
   const book=load(KEY_TEAMS,[]);
   $('#teamBook').innerHTML=`<h2>チームの登録</h2><p class="note" style="margin-top:0">大会などで、先にチーム名と色を入れておけます。左の色の四角を押すと色を選べます。上のチームA・Bの「登録・対戦したチームから選ぶ」で選べます。</p>
-    ${book.map((t,j)=>`<div class="bookrow"><button class="chip" data-bcol="${j}" style="--c1:${t.c1};--c2:${t.c2||t.c1}" aria-label="色を選ぶ"></button><input type="text" maxlength="16" value="${esc(t.name)}" data-book="${j}" placeholder="チーム名を入力"><button class="open" data-bdel="${j}">消す</button></div>`).join('')}
+    ${book.map((t,j)=>`<div class="bookrow"><button class="chip" data-bcol="${j}" style="--c1:${t.c1};--c2:${t.c2||t.c1}" aria-label="色を選ぶ"></button><input type="text" maxlength="16" value="${esc(t.name)}" data-book="${j}" placeholder="チーム名を入力"><span class="mv"><button data-bmv="${j}:-1" ${j?'':'disabled'} aria-label="上へ">▲</button><button data-bmv="${j}:1" ${j<book.length-1?'':'disabled'} aria-label="下へ">▼</button></span><button class="open" data-bdel="${j}">消す</button></div>`).join('')}
     <button class="sec" id="bookAdd" style="margin-top:12px">＋ チームを追加</button>`;
 }
 function showBookColor(j){
@@ -464,6 +467,7 @@ $('#setup').addEventListener('click',e=>{
   else if(b.id==='resume'){state=load(KEY,null);show('board');return}
   else if(b.id==='toResults'){renderResults();show('results');return}
   else if(b.id==='bookAdd'){const book=load(KEY_TEAMS,[]).filter(t=>t.name);const c1=COLORS[(book.length*4)%COLORS.length];book.push({name:'',c1,c2:'#f6f5f0'});save(KEY_TEAMS,book.slice(-40));renderSetup();const ins=$$('[data-book]');ins[ins.length-1].focus();return}
+  else if(b.dataset.bmv!=null){const[j,d]=b.dataset.bmv.split(':').map(Number),book=load(KEY_TEAMS,[]),k=j+d;if(k<0||k>=book.length)return;[book[j],book[k]]=[book[k],book[j]];save(KEY_TEAMS,book);renderSetup();return}
   else if(b.dataset.bcol!=null){showBookColor(+b.dataset.bcol);return}
   else if(b.dataset.bdel!=null){const book=load(KEY_TEAMS,[]);if(book[+b.dataset.bdel]?.name&&!confirm(`「${book[+b.dataset.bdel].name}」を一覧から消しますか？`))return;book.splice(+b.dataset.bdel,1);save(KEY_TEAMS,book);renderSetup();return}
   else return;
@@ -486,8 +490,8 @@ let state=null,hist=[];
 function startMatch(){
   cfg.teams.forEach((t,i)=>{if(!t.name.trim())t.name=i?'チームB':'チームA'});
   let saved=load(KEY_TEAMS,[]);
-  cfg.teams.forEach(t=>{saved=saved.filter(s=>s.name!==t.name);saved.unshift({...t})});
-  save(KEY_TEAMS,saved.filter(x=>x.name).slice(0,40));save(KEY_LAST,cfg);
+  cfg.teams.forEach(t=>{const k=saved.findIndex(s=>s.name===t.name);if(k>=0)saved[k]={...t};else saved.push({...t})});
+  save(KEY_TEAMS,saved.filter(x=>x.name).slice(-60));save(KEY_LAST,cfg);
   state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:Date.now(),setStart:Date.now()};
   hist=[];persist();show('board');
 }
