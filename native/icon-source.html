@@ -1,0 +1,80 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Board;src:url(file:///Users/shinnomika/git/volley-score/fonts/bebas-neue.woff2)}
+body{margin:0;background:#f2f2f2}
+.ic{width:1024px;height:1024px;position:relative;overflow:hidden;background:#1D5FD1}
+.num{font-family:Board;line-height:1}
+.card{position:absolute;border-radius:48px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+svg.b{position:absolute}
+#sheet{display:flex;gap:40px;padding:40px;width:max-content}
+#sheet div{text-align:center;font:600 28px sans-serif;color:#333}
+</style></head><body>
+<!-- 11/16 みかさん「ボールの色の区切りのところ、縁取りじゃないけど線を入れる」 -->
+<svg width="0" height="0" style="position:absolute"><defs>
+  <clipPath id="cc"><circle cx="50" cy="50" r="44"/></clipPath>
+  <path id="band" d="M-5 30 C16 16 38 22 52 38 C64 52 80 36 105 12 L105 46 C88 64 74 74 64 74 C68 84 70 96 68 108 L34 108 C36 92 36 80 33 70 C24 57 12 55 -5 62Z"/>
+  <g id="edges" fill="none" stroke-linecap="round">
+    <path d="M-5 30 C16 16 38 22 52 38 C64 52 80 36 105 12"/>
+    <path d="M105 46 C88 64 74 74 64 74 C68 84 70 96 68 108"/>
+    <path d="M34 108 C36 92 36 80 33 70 C24 57 12 55 -5 62"/>
+  </g>
+  <!-- パネルの縫い目（色の中を通る線・本物のボールのパネルの継ぎ目） -->
+  <g id="inner" fill="none" stroke-linecap="round">
+    <path d="M-5 46 C17 35 36 37 47 52 C57 64 80 52 105 29"/>
+    <path d="M49 74 C52 86 53 96 51 108"/>
+    <path d="M-5 13 C17 0 40 4 56 21 C68 33 84 18 105 -6"/>
+  </g>
+
+  <!-- L1: 色の境目に白い細い溝 -->
+  <symbol id="L1" viewBox="0 0 100 100">
+   <circle cx="50" cy="50" r="44" fill="#FFD21F"/>
+   <g clip-path="url(#cc)"><use href="#band" fill="#1D3F8F"/><use href="#edges" stroke="#fff" stroke-width="3.2"/></g>
+   <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="4"/>
+  </symbol>
+  <!-- L2: 境目に白い溝＋色の中にもパネルの継ぎ目（色を少し濃くした線） -->
+  <symbol id="L2" viewBox="0 0 100 100">
+   <circle cx="50" cy="50" r="44" fill="#FFD21F"/>
+   <g clip-path="url(#cc)">
+    <g stroke-width="2"><use href="#inner" stroke="#E3AE00"/></g>
+    <use href="#band" fill="#1D3F8F"/>
+    <g clip-path="url(#cc)"><clipPath id="bc"><use href="#band"/></clipPath>
+     <g clip-path="url(#bc)"><use href="#inner" stroke="#12285E" stroke-width="2"/></g></g>
+    <use href="#edges" stroke="#fff" stroke-width="3.2"/>
+   </g>
+   <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="4"/>
+  </symbol>
+  <!-- L3: 全部の継ぎ目を白い線で（線の本数でボールらしさ） -->
+  <symbol id="L3" viewBox="0 0 100 100">
+   <circle cx="50" cy="50" r="44" fill="#FFD21F"/>
+   <g clip-path="url(#cc)"><use href="#band" fill="#1D3F8F"/>
+    <use href="#inner" stroke="#fff" stroke-width="1.8"/>
+    <use href="#edges" stroke="#fff" stroke-width="3.2"/></g>
+   <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" stroke-width="4"/>
+  </symbol>
+</defs></svg>
+
+<div id="sheet">
+ <div><svg viewBox="0 0 100 100" width="360" height="360"><use href="#L1"/></svg><br>L1</div>
+ <div><svg viewBox="0 0 100 100" width="360" height="360"><use href="#L2"/></svg><br>L2</div>
+ <div><svg viewBox="0 0 100 100" width="360" height="360"><use href="#L3"/></svg><br>L3</div>
+</div>
+
+<div class="ic" id="M1">
+  <div class="card" style="left:70px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">2</span></div>
+  <div class="card" style="left:574px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">1</span></div>
+  <div style="position:absolute;left:0;right:0;top:507px;height:10px;background:#1D5FD1"></div>
+  <svg class="b" viewBox="0 0 100 100" style="left:362px;top:362px;width:300px;height:300px;filter:drop-shadow(0 6px 10px #0003)"><use href="#L1"/></svg>
+</div>
+<div class="ic" id="M2">
+  <div class="card" style="left:70px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">2</span></div>
+  <div class="card" style="left:574px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">1</span></div>
+  <div style="position:absolute;left:0;right:0;top:507px;height:10px;background:#1D5FD1"></div>
+  <svg class="b" viewBox="0 0 100 100" style="left:362px;top:362px;width:300px;height:300px;filter:drop-shadow(0 6px 10px #0003)"><use href="#L2"/></svg>
+</div>
+<div class="ic" id="M3">
+  <div class="card" style="left:70px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">2</span></div>
+  <div class="card" style="left:574px;top:230px;width:380px;height:564px"><span class="num" style="font-size:500px;color:#1D5FD1;padding-top:40px">1</span></div>
+  <div style="position:absolute;left:0;right:0;top:507px;height:10px;background:#1D5FD1"></div>
+  <svg class="b" viewBox="0 0 100 100" style="left:362px;top:362px;width:300px;height:300px;filter:drop-shadow(0 6px 10px #0003)"><use href="#L3"/></svg>
+</div>
+</body></html>
