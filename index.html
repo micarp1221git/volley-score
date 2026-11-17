@@ -267,7 +267,7 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
   .gs-en{font-size:24px}
   .gs-body{display:grid;grid-template-columns:1.25fr 1fr;grid-template-areas:"win win" "teams sets" "teams time" "btns btns";column-gap:20px;align-items:center;padding:8px 18px 10px}
   .gs-win{grid-area:win;margin-bottom:6px;font-size:18px}
-  .gs-teams{grid-area:teams}.gs-sets{grid-area:sets;margin-top:0}.gs-time{grid-area:time;margin-top:6px;align-self:start}
+  .gs-teams{grid-area:teams}.gs-sets{grid-area:sets;margin-top:0}.gs-body>.flowc{grid-area:sets;min-width:0;margin:0}.gs-time{grid-area:time;margin-top:6px;align-self:start}
   .gs-t .fr{padding:10px;border-radius:14px}
   .gs-t .flip{width:min(150px,18vw);height:min(132px,30svh);font-size:min(120px,27svh)}
   .gs-nm{font-size:15px}.gs-t{max-width:none}
@@ -680,7 +680,7 @@ function flowChart(teams,log){
   for(let i=1;i<it.length;i++)ln+=`<line x1="${X(i-1)}" y1="${RY[it[i-1].t]}" x2="${X(i)}" y2="${RY[it[i].t]}" stroke="var(--text)" stroke-opacity=".5" stroke-width="2.2"${it[i].cut?' stroke-dasharray="3 4"':''}/>`;
   const dot=(o,i)=>{const c=teams[o.t].c1,x=X(i),y=RY[o.t];return o.to
     ?`<circle cx="${x}" cy="${y}" r="${r-1}" fill="var(--board2)" stroke="${c}" stroke-width="2.4"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">T</text>`
-    :`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="var(--text)" stroke-opacity=".35" stroke-width="1.2"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="${o.v>9?12:13}" font-weight="700" fill="${ink(c)}" style="font-family:var(--num)">${o.v}</text>`};
+    :`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${teams[o.t].c2||'var(--text)'}" stroke-width="2.4"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="${o.v>9?12:13}" font-weight="700" fill="${ink(c)}" style="font-family:var(--num)">${o.v}</text>`};
   const chip=(i,a)=>`<span class="lg"><i style="background:${teams[i].c1}"></i>${a} ${esc(teams[i].name)}</span>`;
   return `<div class="flowc"><div class="lgs">${chip(0,'上の段')}${chip(1,'下の段')}</div><div class="fcs"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="得点経過">${ln}${it.map(dot).join('')}</svg></div></div>`;
 }
@@ -698,11 +698,14 @@ function showFlowSaved(i){
 }
 function showSetEnd(){
   const c=state.cfg,w=state.setEnded,n=state.sets.length+1,won=wonSets();won[w]++;
-  ov(`<h3>第${n}セット　${esc(c.teams[w].name)}</h3>
-    <div class="big">${state.score[0]} - ${state.score[1]}</div>
-    <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}${state.setStart?`<br>このセットの時間 ${durJ((state.setEndAt||Date.now())-state.setStart)}`:''}</div>
-    <div class="fl2">${flowHTML(c.teams,state.log||[],'このセットの得点経過')}${flowChart(c.teams,state.log||[])}</div>
-    <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div>`,'wide');
+  // 11/17 みかさん「セット終了も試合終了と似ためくりのデザインに。得点が目立つことが大切」「四角（表）はいらない・丸だけ」
+  const card=i=>{const t=c.teams[i],win=i===w;return `<div class="gs-t ${win?'w':'lose'}"><div class="fr" style="--c1:${t.c1};--c2:${t.c2||t.c1}"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">${state.score[i]}</span></div></div><div class="gs-nm">${esc(t.name)}</div>${win?'<div class="gs-badge">WIN</div>':''}</div>`};
+  ov(`<div class="gs-head"><span class="gs-en">SET ${n}</span><span class="gs-jp">第${n}セット終了</span></div>
+    <div class="gs-body"><div class="gs-win">${esc(c.teams[w].name)} がとりました</div>
+    <div class="gs-teams">${card(0)}<div class="gs-dash">-</div>${card(1)}</div>
+    <div class="gs-time">セット ${won[0]} - ${won[1]}${state.setStart?`　このセットの時間 ${durJ((state.setEndAt||Date.now())-state.setStart)}`:''}</div>
+    ${flowChart(c.teams,state.log||[])}
+    <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div></div>`,'gsm');
   flowToEnd();
 }
 function showMid(){
