@@ -231,6 +231,17 @@ select{width:100%;height:44px;border-radius:4px;background:#101114;color:var(--t
 .gs-row b.w{background:#ffd21f;color:#16171a}
 .gs-row .t{text-align:left}
 .gs-time{margin-top:12px;font-size:13px;color:var(--sub)}
+/* 得点経過（11/17 みかさん「テレビ観戦の時に点数の経緯がわかるやつ」） */
+.flow{margin:12px 0 4px;text-align:left}
+.flow h5{margin:0 0 4px;font-size:13px;color:var(--sub);font-weight:700}
+.flow .fx{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.flow table{border-collapse:separate;border-spacing:2px;font-family:var(--num);font-size:17px;line-height:1}
+.flow th{position:sticky;left:0;z-index:1;max-width:5.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11px -apple-system,"Hiragino Sans",sans-serif;padding:5px 6px;border-radius:4px;text-align:left;box-shadow:4px 0 0 #fff}
+.flow td{min-width:1.45em;height:1.6em;text-align:center;border-radius:3px;padding:2px 1px 0}
+.flow td.p{background:var(--tc);color:var(--ti)}
+.flow td.to{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1.5px var(--text);font-size:13px}
+.flow td.ed{color:var(--sub);font-size:12px}
+.flow .none{font-size:12px;color:var(--sub)}
 @media (max-height:520px) and (orientation:landscape){
   .modal.gsm{max-width:880px;max-height:94svh}
   .gs-head{flex-direction:row;justify-content:center;gap:14px;padding:6px 16px 4px}
@@ -549,7 +560,7 @@ function startMatch(){
   let saved=load(KEY_TEAMS,[]);
   cfg.teams.forEach(t=>{const k=saved.findIndex(s=>s.name===t.name);if(k>=0)saved[k]={...t};else saved.push({...t})});
   save(KEY_TEAMS,saved.filter(x=>x.name).slice(-60));save(KEY_LAST,cfg);
-  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:null,setStart:null};
+  state={cfg:JSON.parse(JSON.stringify(cfg)),score:[0,0],sets:[],serve:cfg.firstServe,firstServe:cfg.firstServe,leftTeam:0,to:[0,0],setEnded:null,done:false,started:null,setStart:null,log:[]};
   hist=[];persist();show('board');
 }
 function persist(){save(KEY,state);save(KEY+'.hist',hist.slice(-300))}
@@ -571,7 +582,7 @@ function setWinner(){
 function snap(){hist.push(JSON.stringify(state))}
 function point(team){
   if(state.setEnded!=null||state.done)return;
-  snap();if(!state.started)state.started=state.setStart=Date.now();state.score[team]++;state.serve=team;vib();
+  snap();if(!state.started)state.started=state.setStart=Date.now();state.score[team]++;state.serve=team;(state.log||=[]).push(team);vib();
   const w=setWinner();if(w!=null){state.setEnded=w;state.setEndAt=Date.now()}
   else if(isFinalSet()&&!state.midDone&&Math.max(...state.score)===Math.ceil(setTarget()/2))state.midAsk=true;
   persist();draw(team);
@@ -579,7 +590,7 @@ function point(team){
 function undo(){if(!hist.length)return;state=JSON.parse(hist.pop());vib();persist();draw()}
 function nextSet(){
   snap();
-  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w,t:state.setStart?(state.setEndAt||Date.now())-state.setStart:0});state.setStart=Date.now();state.setEndAt=null;
+  const w=state.setEnded;state.sets.push({a:state.score[0],b:state.score[1],w,t:state.setStart?(state.setEndAt||Date.now())-state.setStart:0,log:state.log||[]});state.log=[];state.setStart=Date.now();state.setEndAt=null;
   if(wonSets()[w]>=state.cfg.setsToWin){state.done=true;state.ended=Date.now();persist();draw();return}
   state.score=[0,0];state.to=[0,0];state.setEnded=null;state.midAsk=false;state.midDone=false;
   if(state.cfg.swapSets!==false)state.leftTeam=1-state.leftTeam; // セットごとにコートを入れ替える
@@ -620,12 +631,40 @@ function draw(changed){
 }
 const redraw=()=>state&&$('#board').classList.contains('on')&&draw();addEventListener('resize',redraw);addEventListener('orientationchange',()=>setTimeout(redraw,200));
 
+// 得点経過（11/17 みかさん「点数の行き来がわかるといいな。テレビ観戦の時の」「タイムアウトがいつだったかも」）
+// log: 0/1＝その組の1点、'T0'/'T1'＝タイムアウト、'E12-10'＝点数を直した（そのあとの点）
+function flowHTML(teams,log,title){
+  if(!log||!log.length)return `<div class="flow">${title?`<h5>${title}</h5>`:''}<div class="none">${log?'まだ点が入っていません':'このセットは記録がありません（記録をはじめる前の試合）'}</div></div>`;
+  const sc=[0,0],rows=[[],[]];
+  for(const e of log){
+    if(e===0||e===1){sc[e]++;rows[e].push(`<td class="p">${sc[e]}</td>`);rows[1-e].push('<td></td>')}
+    else if(typeof e==='string'&&e[0]==='T'){const t=+e[1];rows[t].push('<td class="to">T</td>');rows[1-t].push('<td></td>')}
+    else if(typeof e==='string'&&e[0]==='E'){const m=e.slice(1).split('-').map(Number);if(m.length===2){sc[0]=m[0];sc[1]=m[1]}rows.forEach(r=>r.push('<td class="ed">✎</td>'))}
+  }
+  const th=i=>`<th style="background:${teams[i].c1};color:${ink(teams[i].c1)}">${esc(teams[i].name)}</th>`;
+  return `<div class="flow">${title?`<h5>${title}</h5>`:''}<div class="fx"><table>${[0,1].map(i=>`<tr style="--tc:${teams[i].c1};--ti:${ink(teams[i].c1)}">${th(i)}${rows[i].join('')}</tr>`).join('')}</table></div></div>`;
+}
+const flowNote='<div class="sm" style="margin-top:6px">数字＝その時点の点数　T＝タイムアウト　✎＝点を直した所</div>';
+const flowToEnd=()=>{const fx=$$('#ovBody .fx');if(fx.length)fx[fx.length-1].scrollLeft=1e6}; // いまのセットは最新の点が見える所から
+function showFlowLive(){
+  const c=state.cfg;
+  ov(`<h3>得点経過</h3>${state.sets.map((s,i)=>flowHTML(c.teams,s.log,`第${i+1}セット　${s.a} - ${s.b}`)).join('')}${state.done?'':flowHTML(c.teams,state.log||[],`第${state.sets.length+1}セット（いま）　${state.score[0]} - ${state.score[1]}`)}${flowNote}
+    <button class="sec" data-a="close">試合にもどる</button>`);
+  flowToEnd();
+}
+function showFlowSaved(i){
+  const r=load(KEY_RES,[])[i];if(!r)return;
+  ov(`<h3>得点経過</h3><div class="sm">${esc(r.teams[0].name)}　vs　${esc(r.teams[1].name)}</div>${r.sets.map((s,k)=>flowHTML(r.teams,s.log,`第${k+1}セット　${s.a} - ${s.b}`)).join('')}${flowNote}
+    <button class="sec" data-a="backResult" data-i="${i}">もどる</button>`);
+}
 function showSetEnd(){
   const c=state.cfg,w=state.setEnded,n=state.sets.length+1,won=wonSets();won[w]++;
   ov(`<h3>第${n}セット　${esc(c.teams[w].name)}</h3>
     <div class="big">${state.score[0]} - ${state.score[1]}</div>
     <div class="sm">セット ${esc(c.teams[0].name)} ${won[0]} - ${won[1]} ${esc(c.teams[1].name)}${state.setStart?`<br>このセットの時間 ${durJ((state.setEndAt||Date.now())-state.setStart)}`:''}</div>
+    ${flowHTML(c.teams,state.log||[],'このセットの得点経過')}
     <div class="btns"><button class="sec" data-a="undo">1点戻す</button><button class="cta" data-a="next">${won[w]>=c.setsToWin?'試合を終える':'次のセットへ'}</button></div>`);
+  flowToEnd();
 }
 function showMid(){
   const n=Math.max(...state.score);
@@ -644,6 +683,7 @@ function showResult(){
     <div class="gs-teams">${card(0)}<div class="gs-dash">-</div>${card(1)}</div>
     <div class="gs-sets">${state.sets.map((s,i)=>`<div class="gs-row"><span>第${i+1}セット</span><b class="${s.w===0?'w':''}">${s.a}</b><span>-</span><b class="${s.w===1?'w':''}">${s.b}</b><span class="t">${s.t?durJ(s.t):''}</span></div>`).join('')}</div>
     ${state.started?`<div class="gs-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="14" r="8"/><path d="M12 14V10M10 2h4M12 2v4"/></svg>試合時間 ${durJ((state.ended||Date.now())-state.started)}</div>`:''}
+    <button class="sec" data-a="flow">得点経過を見る</button>
     <div class="btns"><button class="sec" data-a="undo">戻す</button><button class="cta" data-a="saveOnly">保存する</button></div></div>`,'gsm');
 }
 // 点数を直す：打ちこんだ数字で、いまのセットとこれまでのセットを直す
@@ -690,8 +730,9 @@ function applyEdit(){
   const sets=state.sets.map((s,i)=>({a:v(i+':a'),b:v(i+':b')}));
   if(sets.some(s=>s.a===s.b)){alert('終わったセットの点が同点になっています。どちらかが多くなるように直してください。');return}
   snap();
-  state.sets=sets.map(s=>({...s,w:s.a>s.b?0:1}));
-  if(!state.done){state.score=[v('cur:a'),v('cur:b')];state.setEnded=setWinner()}
+  // 直したセットの得点経過には「直した」印を足す（経過と点が合わなくなるため）
+  state.sets=sets.map((s,i)=>{const o=state.sets[i],ch=o.a!==s.a||o.b!==s.b;return {...o,...s,w:s.a>s.b?0:1,log:ch&&o.log?[...o.log,'E'+s.a+'-'+s.b]:o.log}});
+  if(!state.done){const nc=[v('cur:a'),v('cur:b')];if(nc[0]!==state.score[0]||nc[1]!==state.score[1])(state.log||=[]).push('E'+nc[0]+'-'+nc[1]);state.score=nc;state.setEnded=setWinner()}
   else{const won=wonSets();if(Math.max(...won)<state.cfg.setsToWin){state.done=false;const last=state.sets.pop();state.score=[last.a,last.b];state.setEnded=setWinner()}}
   hideOv();persist();draw();
 }
@@ -709,7 +750,10 @@ $('#ov').addEventListener('click',async e=>{
   else if(a==='bc'){const[j,k,c]=b.dataset.v.split(':');const book=load(KEY_TEAMS,[]);if(book[+j]){book[+j][k]=c;if(!book[+j].c2)book[+j].c2=book[+j].c1;save(KEY_TEAMS,book);showBookColor(+j);renderSetup()}}
   else if(a==='close'){hideOv();state&&$('#board').classList.contains('on')&&draw()}
   else if(a==='edit'){showEdit()}
-  else if(a==='finishNow'){hideOv();if(!confirm('いまの点で試合を終えて、結果を残しますか？'))return draw();snap();const sc=state.score;if(sc[0]||sc[1])state.sets.push({a:sc[0],b:sc[1],w:sc[0]===sc[1]?null:(sc[0]>sc[1]?0:1),t:since(state.setStart)});state.score=[0,0];state.setEnded=null;state.midAsk=false;state.done=true;state.ended=Date.now();persist();draw()}
+  else if(a==='flow'){showFlowLive()}
+  else if(a==='flowSaved'){showFlowSaved(+b.dataset.i)}
+  else if(a==='backResult'){openResult(+b.dataset.i)}
+  else if(a==='finishNow'){hideOv();if(!confirm('いまの点で試合を終えて、結果を残しますか？'))return draw();snap();const sc=state.score;if(sc[0]||sc[1])state.sets.push({a:sc[0],b:sc[1],w:sc[0]===sc[1]?null:(sc[0]>sc[1]?0:1),t:since(state.setStart),log:state.log||[]});state.log=[];state.score=[0,0];state.setEnded=null;state.midAsk=false;state.done=true;state.ended=Date.now();persist();draw()}
   else if(a==='end'){hideOv();if(confirm('この試合をやめて、設定の画面にもどりますか？（途中までの点は残りません）')){state.done=true;persist();finish()}else draw()}
   else if(a==='help'){hideOv();show('help')}
   else if(a==='midSwap'){snap();state.leftTeam=1-state.leftTeam;state.midAsk=false;state.midDone=true;persist();draw()}
@@ -780,6 +824,7 @@ function openResult(i){
   ov(`<div class="sm">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日　${hm(d)}</div><h3>${esc(r.teams[0].name)}　vs　${esc(r.teams[1].name)}</h3><div class="big">${r.won[0]} - ${r.won[1]}</div><div class="sm">${r.sets.map((s,k)=>`第${k+1}セット　${s.a} - ${s.b}${s.t?`　（${durJ(s.t)}）`:''}`).join('<br>')}${r.dur?`<br>試合時間 ${durJ(r.dur)}`:''}</div>
   <div class="sm" style="margin-top:12px">送り先（LINE・BAND・写真など）は、次の画面で選べます</div>
   <div class="btns"><button class="cta" data-a="share" data-i="${i}">画像で送る</button><button class="cta" data-a="shareText" data-i="${i}" style="background:var(--card)">文字で送る</button></div>
+  <button class="sec" data-a="flowSaved" data-i="${i}">得点経過を見る</button>
   <div class="btns"><button class="sec" data-a="reOpen" data-i="${i}">結果を直す</button><button class="sec" data-a="del" data-i="${i}">消す</button></div>
   <button class="sec" data-a="close">閉じる</button>`);
 }
@@ -818,11 +863,12 @@ $('#backSetup').onclick=()=>{renderSetup();show('setup')};
 
 // 試合の画面の操作（押した瞬間に点が入るよう pointerdown で受ける）
 $$('.side').forEach(el=>el.addEventListener('pointerdown',e=>{if(e.target.closest('.to'))return;e.preventDefault();point(+el.dataset.team)}));
-$$('.to').forEach(el=>el.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const ti=+el.dataset.team;if(state.to[ti]>=state.cfg.timeouts)return;snap();state.to[ti]++;vib();persist();draw()}));
+$$('.to').forEach(el=>el.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();const ti=+el.dataset.team;if(state.to[ti]>=state.cfg.timeouts)return;snap();state.to[ti]++;(state.log||=[]).push('T'+ti);vib();persist();draw()}));
 $$('.hit').forEach(el=>el.addEventListener('pointerdown',e=>{e.preventDefault();point(+el.dataset.team)}));
 const swapCourt=()=>{snap();state.leftTeam=1-state.leftTeam;vib();persist();draw()};
 const openMenu=()=>ov(`<h3>メニュー</h3>
   <button class="sec" data-a="close">試合にもどる</button>
+  <button class="sec" data-a="flow">得点経過を見る</button>
   <button class="sec" data-a="edit">点数を直す</button>
   <button class="sec" data-a="help">使い方とルール</button>
   <button class="sec" data-a="toSetup">設定をかえる（点数・チーム・色）</button>
