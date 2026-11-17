@@ -681,8 +681,7 @@ function flowChart(teams,log){
   const dot=(o,i)=>{const c=teams[o.t].c1,x=X(i),y=RY[o.t];return o.to
     ?`<circle cx="${x}" cy="${y}" r="${r-1}" fill="var(--board2)" stroke="${c}" stroke-width="2.4"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">T</text>`
     :`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${teams[o.t].c2||'var(--text)'}" stroke-width="2.4"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="${o.v>9?12:13}" font-weight="700" fill="${ink(c)}" style="font-family:var(--num)">${o.v}</text>`};
-  const chip=(i,a)=>`<span class="lg"><i style="background:${teams[i].c1}"></i>${a} ${esc(teams[i].name)}</span>`;
-  return `<div class="flowc"><div class="lgs">${chip(0,'上の段')}${chip(1,'下の段')}</div><div class="fcs"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="得点経過">${ln}${it.map(dot).join('')}</svg></div></div>`;
+  return `<div class="flowc"><div class="fcs"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="得点経過">${ln}${it.map(dot).join('')}</svg></div></div>`;
 }
 const flowToEnd=()=>{const fx=$$('#ovBody .fx');if(fx.length)fx[fx.length-1].scrollLeft=1e6;$$('#ovBody .fcs').forEach(e=>e.scrollLeft=1e6)}; // いまのセットは最新の点が見える所から
 function showFlowLive(){
@@ -701,7 +700,7 @@ function showSetEnd(){
   // 11/17 みかさん「セット終了も試合終了と似ためくりのデザインに。得点が目立つことが大切」「四角（表）はいらない・丸だけ」
   const card=i=>{const t=c.teams[i],win=i===w;return `<div class="gs-t ${win?'w':'lose'}"><div class="fr" style="--c1:${t.c1};--c2:${t.c2||t.c1}"><div class="flip"><div class="rings"><i></i><i></i></div><span class="v">${state.score[i]}</span></div></div><div class="gs-nm">${esc(t.name)}</div>${win?'<div class="gs-badge">WIN</div>':''}</div>`};
   ov(`<div class="gs-head"><span class="gs-en">SET ${n}</span><span class="gs-jp">第${n}セット終了</span></div>
-    <div class="gs-body"><div class="gs-win">${esc(c.teams[w].name)} がとりました</div>
+    <div class="gs-body"><div class="gs-win">${esc(c.teams[w].name)} の勝ち</div>
     <div class="gs-teams">${card(0)}<div class="gs-dash">-</div>${card(1)}</div>
     <div class="gs-time">セット ${won[0]} - ${won[1]}${state.setStart?`　このセットの時間 ${durJ((state.setEndAt||Date.now())-state.setStart)}`:''}</div>
     ${flowChart(c.teams,state.log||[])}
