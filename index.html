@@ -665,25 +665,24 @@ function flowHTML(teams,log,title){
 }
 const flowNote='<div class="sm" style="margin-top:6px">数字＝その時点の点数　T＝タイムアウト　✎＝点を直した所</div>';
 // 得点経過の折れ線（11/17 みかさん「線でつないだ得点経過のほうが見やすい」「セットが終わった時に、得点表の下か右に」）
-// 11/17 みかさんの手描き＝丸を1本の線でつないで上下する形。1点ごとに丸1つ・左の組が取ったら上へ、右の組なら下へ。丸の中＝取った組のその時の点・丸の色＝取った組の色。真ん中の線＝同点
+// 11/17 みかさんの手描き（2枚目）＝上下2段のくさり。上の段＝左の組・下の段＝右の組。1点ごとに丸1つ、続けて取る間は同じ段を横へ、相手に移ったら斜めの線で段を移る。丸の中＝その組のその時の点。T＝タイムアウト（取った組の段に置く）
 function flowChart(teams,log){
   if(!log||!log.length)return '';
-  const sc=[0,0],pts=[],tos=[];let d=0,cut=0;
+  const sc=[0,0],it=[];let cut=0;
   for(const e of log){
-    if(e===0||e===1){sc[e]++;d+=e===0?1:-1;pts.push({d,t:e,v:sc[e],cut});cut=0}
-    else if(typeof e==='string'&&e[0]==='T'){const t=+e[1];if(t===0||t===1)tos.push([pts.length,t])}
-    else if(typeof e==='string'&&e[0]==='E'){const m=e.slice(1).split('-').map(Number);if(m.length===2&&m.every(Number.isFinite)){sc[0]=m[0];sc[1]=m[1];d=m[0]-m[1];cut=1}}
+    if(e===0||e===1){sc[e]++;it.push({t:e,v:sc[e],cut});cut=0}
+    else if(typeof e==='string'&&e[0]==='T'){const t=+e[1];if(t===0||t===1)it.push({t,to:1,cut});cut=0}
+    else if(typeof e==='string'&&e[0]==='E'){const m=e.slice(1).split('-').map(Number);if(m.length===2&&m.every(Number.isFinite)){sc[0]=m[0];sc[1]=m[1];cut=1}}
   }
-  if(!pts.length)return '';
-  const mx=Math.max(3,...pts.map(p=>Math.abs(p.d))),S=26,RH=Math.max(8,Math.min(22,(innerHeight<520&&innerWidth>innerHeight?50:84)/mx)),r=10,L=r+6,T=r+18,B=r+6;
-  const W=L+pts.length*S+r+4,H=T+2*mx*RH+B,X=i=>L+i*S,Y=v=>T+(mx-v)*RH,Y0=Y(0);
-  let g=`<line x1="0" x2="${W}" y1="${Y0}" y2="${Y0}" stroke="var(--sub)" stroke-width="1.2" stroke-dasharray="4 4"/>`;
-  let ln='',prev=[X(0)-S*0.6,Y0];
-  pts.forEach((p,i)=>{const c=[X(i),Y(p.d)];ln+=`<line x1="${prev[0]}" y1="${prev[1]}" x2="${c[0]}" y2="${c[1]}" stroke="var(--text)" stroke-opacity=".55" stroke-width="2.4"${p.cut?' stroke-dasharray="3 4"':''}/>`;prev=c});
-  const dots=pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.d)}" r="${r}" fill="${teams[p.t].c1}" stroke="var(--text)" stroke-opacity=".35" stroke-width="1.2"/><text x="${X(i)}" y="${Y(p.d)+4}" text-anchor="middle" font-size="${p.v>9?11:12}" font-weight="700" fill="${ink(teams[p.t].c1)}" style="font-family:var(--num)">${p.v}</text>`).join('');
-  const to=tos.map(([n,t])=>{const x=n?X(n-1)+S/2:X(0)-S/2;return `<line x1="${x}" x2="${x}" y1="14" y2="${H-4}" stroke="${teams[t].c1}" stroke-width="2" stroke-dasharray="2 3"/><rect x="${x-9}" y="1" width="18" height="15" rx="4" fill="${teams[t].c1}"/><text x="${x}" y="12.5" text-anchor="middle" font-size="10" font-weight="700" fill="${ink(teams[t].c1)}">T</text>`}).join('');
+  if(!it.length)return '';
+  const S=30,r=12,L=r+4,RY=[r+4,r+4+44],W=L+(it.length-1)*S+r+4,H=RY[1]+r+4,X=i=>L+i*S;
+  let ln='';
+  for(let i=1;i<it.length;i++)ln+=`<line x1="${X(i-1)}" y1="${RY[it[i-1].t]}" x2="${X(i)}" y2="${RY[it[i].t]}" stroke="var(--text)" stroke-opacity=".5" stroke-width="2.2"${it[i].cut?' stroke-dasharray="3 4"':''}/>`;
+  const dot=(o,i)=>{const c=teams[o.t].c1,x=X(i),y=RY[o.t];return o.to
+    ?`<circle cx="${x}" cy="${y}" r="${r-1}" fill="var(--board2)" stroke="${c}" stroke-width="2.4"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">T</text>`
+    :`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="var(--text)" stroke-opacity=".35" stroke-width="1.2"/><text x="${x}" y="${y+4.5}" text-anchor="middle" font-size="${o.v>9?12:13}" font-weight="700" fill="${ink(c)}" style="font-family:var(--num)">${o.v}</text>`};
   const chip=(i,a)=>`<span class="lg"><i style="background:${teams[i].c1}"></i>${a} ${esc(teams[i].name)}</span>`;
-  return `<div class="flowc"><div class="lgs">${chip(0,'↑')}${chip(1,'↓')}</div><div class="fcs"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="得点経過">${g}${to}${ln}${dots}</svg></div><div class="sm" style="margin-top:2px">点線の横線＝同点　T＝タイムアウト</div></div>`;
+  return `<div class="flowc"><div class="lgs">${chip(0,'上の段')}${chip(1,'下の段')}</div><div class="fcs"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="得点経過">${ln}${it.map(dot).join('')}</svg></div></div>`;
 }
 const flowToEnd=()=>{const fx=$$('#ovBody .fx');if(fx.length)fx[fx.length-1].scrollLeft=1e6;$$('#ovBody .fcs').forEach(e=>e.scrollLeft=1e6)}; // いまのセットは最新の点が見える所から
 function showFlowLive(){
